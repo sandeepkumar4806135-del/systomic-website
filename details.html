@@ -512,33 +512,211 @@
             color: #ffffff;
         }
 
-        @media (max-width: 768px) {
+        /* Tablet (768px - 1024px) */
+        @media (max-width: 1024px) {
+            .container {
+                max-width: 100%;
+            }
+
             .form-container {
-                padding: 25px;
+                padding: 30px;
+            }
+
+            .checkbox-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+
+        /* Mobile (up to 768px) */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            .form-container {
+                padding: 20px;
+                border-radius: 15px;
+            }
+
+            .section {
+                margin-bottom: 35px;
+                padding-bottom: 30px;
+            }
+
+            .section-header {
+                margin-bottom: 20px;
+            }
+
+            .section-number {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+                margin-right: 10px;
+            }
+
+            .section-title {
+                font-size: 1.1rem;
+            }
+
+            .section-description {
+                font-size: 0.85rem;
+            }
+
+            .sub-section {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .sub-title {
+                font-size: 1rem;
             }
 
             .checkbox-grid {
                 grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .checkbox-item {
+                padding: 10px 12px;
+            }
+
+            .checkbox-item input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+            }
+
+            .checkbox-item label {
+                font-size: 0.9rem;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .radio-item {
+                min-width: 100%;
+                padding: 12px;
             }
 
             .button-group {
                 flex-direction: column;
+                gap: 10px;
             }
 
             .btn {
                 width: 100%;
+                padding: 14px 20px;
+                font-size: 0.95rem;
             }
 
             .btn-next {
                 margin-left: 0;
             }
 
-            .section-title {
-                font-size: 1.2rem;
+            input[type="text"],
+            input[type="email"],
+            input[type="tel"],
+            input[type="password"],
+            input[type="number"],
+            select,
+            textarea {
+                padding: 12px 14px;
+                font-size: 0.95rem;
             }
 
-            .radio-group {
+            textarea {
+                min-height: 80px;
+            }
+
+            .niche-section {
+                padding: 15px;
+            }
+
+            .niche-title {
+                font-size: 1rem;
+            }
+
+            .success-title {
+                font-size: 1.5rem;
+            }
+
+            .success-text {
+                font-size: 0.95rem;
+            }
+
+            .summary-box {
+                padding: 15px;
+            }
+
+            .summary-item {
                 flex-direction: column;
+                gap: 5px;
+            }
+
+            .summary-value {
+                text-align: left;
+                max-width: 100%;
+                font-size: 0.85rem;
+            }
+
+            .business-badge {
+                font-size: 0.8rem;
+                padding: 6px 15px;
+            }
+        }
+
+        /* Small Mobile (up to 480px) */
+        @media (max-width: 480px) {
+            .form-container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .section-title {
+                font-size: 1rem;
+            }
+
+            .section-number {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                font-size: 0.9rem;
+                padding: 12px 16px;
+            }
+
+            .checkbox-item {
+                padding: 8px 10px;
+            }
+
+            .checkbox-item label {
+                font-size: 0.85rem;
+            }
+
+            .sub-section {
+                padding: 12px;
+            }
+
+            .success-icon {
+                font-size: 3rem;
+            }
+
+            .success-title {
+                font-size: 1.3rem;
             }
         }
     </style>
@@ -1043,24 +1221,17 @@
 
                 <div class="button-group">
                     <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">← Back</button>
-                    <button type="submit" class="btn btn-primary btn-next">Generate Website URL →</button>
+                    <button type="submit" class="btn btn-primary btn-next">Submit Your Details →</button>
                 </div>
             </form>
 
             <!-- URL Result -->
             <div class="url-result" id="urlResult">
                 <div class="success-icon">🎉</div>
-                <div class="success-title">Your Website is Ready!</div>
-                <p class="success-text">Your website details have been submitted successfully. Here's your website URL:</p>
+                <div class="success-title">Details Submitted Successfully!</div>
+                <p class="success-text">Thank you for submitting your website details. Our team will review your information and contact you soon.</p>
 
-                <div class="url-box">
-                    <div class="url-label">Your Website URL</div>
-                    <div class="url-value" id="finalUrl">-</div>
-                    <div class="url-actions">
-                        <button class="btn-copy" onclick="copyUrl(this)">📋 Copy URL</button>
-                        <button class="btn-copy" onclick="window.open(document.getElementById('finalUrl').textContent, '_blank')">🌐 Open Website</button>
-                    </div>
-                </div>
+                <button class="btn btn-primary" style="margin-bottom: 30px;" onclick="window.location.href='index.html'">🏠 Go to Home</button>
 
                 <div class="summary-box">
                     <div class="summary-title">Order Summary</div>
@@ -1432,10 +1603,6 @@
             // Save complete submission to admin dashboard collection
             saveSubmissionToAdmin(orderData, detailsData);
 
-            // Generate URL
-            const url = generateUrl(orderData.businessName);
-            document.getElementById('finalUrl').textContent = url;
-
             // Populate summary
             document.getElementById('sumBusiness').textContent = orderData.businessTypeLabel;
             document.getElementById('sumLevel').textContent = orderData.websiteLevelLabel;
@@ -1469,9 +1636,9 @@
             localStorage.setItem('systomicSubmissions', JSON.stringify(submissions));
         }
 
-        // Copy URL function
+        // Copy URL function (kept for compatibility)
         function copyUrl(btn) {
-            const url = document.getElementById('finalUrl').textContent;
+            const url = document.getElementById('finalUrl')?.textContent || '';
             navigator.clipboard.writeText(url).then(() => {
                 btn.textContent = '✅ Copied!';
                 setTimeout(() => {
