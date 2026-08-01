@@ -1269,11 +1269,19 @@
     </div>
 
     <script>
+    (function() {
         // Load order data from localStorage
-        const orderData = JSON.parse(localStorage.getItem('systomicOrder'));
+        let orderData = null;
+        try {
+            orderData = JSON.parse(localStorage.getItem('systomicOrder'));
+        } catch(e) {
+            orderData = null;
+        }
 
-        if (!orderData) {
-            window.location.href = 'index.html';
+        if (!orderData || !orderData.businessTypeLabel) {
+            // No order data found, redirect to form
+            window.location.replace('index.html');
+            return; // Stop execution - valid inside IIFE
         }
 
         // Display business badge
@@ -1646,6 +1654,8 @@
                 }, 2000);
             });
         }
+
+    })(); // End IIFE
     </script>
 </body>
 </html>

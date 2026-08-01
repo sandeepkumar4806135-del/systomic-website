@@ -1141,8 +1141,10 @@
 
             localStorage.setItem('systomicOrder', JSON.stringify(formData));
 
-            // Redirect to details page
-            window.location.href = 'details.html';
+            // Redirect to details page (using replace for better mobile compatibility)
+            setTimeout(function() {
+                window.location.href = 'details.html';
+            }, 100);
         });
 
         // Remove error on input
