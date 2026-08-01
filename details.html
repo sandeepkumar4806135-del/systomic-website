@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYSTOMIC Digital Systems - Website Details</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #8892b0;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .business-badge {
+            display: inline-block;
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 15px;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .section {
+            margin-bottom: 50px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-number {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-right: 15px;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .section-description {
+            color: #8892b0;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        .sub-section {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .sub-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ccd6f6;
+            margin-bottom: 5px;
+        }
+
+        .sub-description {
+            color: #8892b0;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #ccd6f6;
+            font-size: 0.95rem;
+        }
+
+        label .required {
+            color: #ef4444;
+            margin-left: 3px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238892b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 18px center;
+            cursor: pointer;
+        }
+
+        select option {
+            background: #1a1f3a;
+            color: #ffffff;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #495670;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .checkbox-item.selected {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
+            accent-color: #667eea;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #ccd6f6;
+        }
+
+        .checkbox-item.selected label {
+            color: #ffffff;
+        }
+
+        .social-media-input {
+            margin-top: 8px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .social-media-input.show {
+            display: block;
+        }
+
+        .social-media-input.has-content {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .social-media-input input {
+            padding: 10px 14px;
+            font-size: 0.9rem;
+        }
+
+        .niche-section {
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .niche-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .niche-title .icon {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccd6f6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-next {
+            margin-left: auto;
+        }
+
+        .url-result {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .url-result.show {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .success-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .success-text {
+            color: #8892b0;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        .url-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px auto;
+            max-width: 500px;
+        }
+
+        .url-label {
+            color: #8892b0;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .url-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+            word-break: break-all;
+            margin-bottom: 15px;
+        }
+
+        .url-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-copy {
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-copy:hover {
+            background: rgba(102, 126, 234, 0.25);
+        }
+
+        .summary-box {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .summary-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: #8892b0;
+        }
+
+        .summary-value {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .radio-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .radio-item.selected {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .radio-item input[type="radio"] {
+            margin-right: 8px;
+            accent-color: #667eea;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .radio-item label {
+            margin: 0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #ccd6f6;
+        }
+
+        .radio-item.selected label {
+            color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 25px;
+            }
+
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .btn-next {
+                margin-left: 0;
+            }
+
+            .section-title {
+                font-size: 1.2rem;
+            }
+
+            .radio-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Website Details Questionnaire</h1>
+            <p>Help us understand your business better to create the perfect website</p>
+            <div class="business-badge" id="businessBadge">Loading...</div>
+        </div>
+
+        <div class="form-container">
+            <form id="detailsForm">
+                <!-- Section 1: Business Information -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">1</div>
+                        <div>
+                            <div class="section-title">Business Information</div>
+                            <div class="section-description">Tell us about your business</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="companyDescription">Company Description <span class="required">*</span></label>
+                        <textarea id="companyDescription" placeholder="Describe your business, what you do, and what makes you unique..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="yearEstablished">Year Established <span class="required">*</span></label>
+                        <select id="yearEstablished" required>
+                            <option value="">Select year</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Target Audience - Who are your customers?</label>
+                        <div class="checkbox-grid" id="targetAudience">
+                            <div class="checkbox-item">
+                                <input type="checkbox" value="Age Group">
+                                <label>Age Group</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" value="Gender">
+                                <label>Gender</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" value="Location">
+                                <label>Location</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" value="Budget">
+                                <label>Budget</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" value="Interests">
+                                <label>Interests</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" value="B2B or B2C">
+                                <label>B2B or B2C</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Universal Business Discovery & Website Details -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">2</div>
+                        <div>
+                            <div class="section-title">Universal Business Discovery</div>
+                            <div class="section-description">Website / Web App / Mobile App Project details</div>
+                        </div>
+                    </div>
+
+                    <div class="sub-section">
+                        <div class="form-group">
+                            <label>What type of project are you looking for?</label>
+                            <div class="radio-group" id="projectType">
+                                <div class="radio-item">
+                                    <input type="radio" name="projectType" value="Website">
+                                    <label>🌐 Website</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" name="projectType" value="Web App">
+                                    <label>⚙️ Web App</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" name="projectType" value="Mobile App">
+                                    <label>📱 Mobile App</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Business Goals - Why do you want this website or app?</label>
+                            <div class="checkbox-grid" id="businessGoals">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Get more leads">
+                                    <label>Get more leads</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Sell products">
+                                    <label>Sell products</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Accept bookings">
+                                    <label>Accept bookings</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Build trust">
+                                    <label>Build trust</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Improve customer experience">
+                                    <label>Improve customer experience</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Automate operations">
+                                    <label>Automate operations</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="topGoals">What are the top 3 business goals? <span class="required">*</span></label>
+                            <textarea id="topGoals" placeholder="List your top 3 goals, e.g.:&#10;1. Generate 100 new leads per month&#10;2. Online booking system&#10;3. Showcase our portfolio" required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="sub-section">
+                        <div class="sub-title">Competitor Research</div>
+                        <div class="sub-description">Help us understand what you like and don't like</div>
+
+                        <div class="form-group">
+                            <label for="competitorLikes">1. Which competitor websites do you like? <span class="required">*</span></label>
+                            <textarea id="competitorLikes" placeholder="List competitor websites you admire and why..." required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="featuresLiked">2. What features do you like on those websites?</label>
+                            <textarea id="featuresLiked" placeholder="Describe specific features you like on competitor websites..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="featuresDisliked">3. What features do you dislike?</label>
+                            <textarea id="featuresDisliked" placeholder="Describe features you don't want on your website..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Website Pages, Features & Niche -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">3</div>
+                        <div>
+                            <div class="section-title">Website Pages, Features & Niche</div>
+                            <div class="section-description">Select the pages and features for your website</div>
+                        </div>
+                    </div>
+
+                    <div class="sub-section">
+                        <div class="sub-title">Website Pages</div>
+                        <div class="sub-description">Select the pages you want on your website</div>
+
+                        <div class="form-group">
+                            <label>Select Pages</label>
+                            <div class="checkbox-grid" id="websitePages">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Home">
+                                    <label>Home</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="About">
+                                    <label>About</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Services">
+                                    <label>Services</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Products">
+                                    <label>Products</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Portfolio">
+                                    <label>Portfolio</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Gallery">
+                                    <label>Gallery</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Testimonials">
+                                    <label>Testimonials</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="FAQ">
+                                    <label>FAQ</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Blog">
+                                    <label>Blog</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Careers">
+                                    <label>Careers</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Contact">
+                                    <label>Contact</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Privacy Policy">
+                                    <label>Privacy Policy</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Terms">
+                                    <label>Terms</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Refund Policy">
+                                    <label>Refund Policy</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Google Maps">
+                                    <label>Google Maps</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Working Hours">
+                                    <label>Working Hours</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-section">
+                        <div class="sub-title">Social Media Links</div>
+                        <div class="sub-description">Select social media platforms and add your page links</div>
+
+                        <div class="form-group">
+                            <div class="checkbox-grid" id="socialMedia">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Facebook" class="social-check">
+                                    <label>Facebook</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Instagram" class="social-check">
+                                    <label>Instagram</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="LinkedIn" class="social-check">
+                                    <label>LinkedIn</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="YouTube" class="social-check">
+                                    <label>YouTube</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="X" class="social-check">
+                                    <label>X</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Pinterest" class="social-check">
+                                    <label>Pinterest</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="TikTok" class="social-check">
+                                    <label>TikTok</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="WhatsApp" class="social-check">
+                                    <label>WhatsApp</label>
+                                </div>
+                            </div>
+                            <div class="social-media-input" id="socialMediaInputs"></div>
+                        </div>
+                    </div>
+
+                    <div class="sub-section">
+                        <div class="sub-title">Website Features</div>
+                        <div class="sub-description">Select the features you need</div>
+
+                        <div class="form-group">
+                            <label>Select Features</label>
+                            <div class="checkbox-grid" id="websiteFeatures">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Contact Form">
+                                    <label>Contact Form</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Live Chat">
+                                    <label>Live Chat</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="AI Chatbot">
+                                    <label>AI Chatbot</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Booking System">
+                                    <label>Booking System</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Appointment Scheduling">
+                                    <label>Appointment Scheduling</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Payment Gateway">
+                                    <label>Payment Gateway</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Shopping Cart">
+                                    <label>Shopping Cart</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="User Login">
+                                    <label>User Login</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Customer Dashboard">
+                                    <label>Customer Dashboard</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Admin Dashboard">
+                                    <label>Admin Dashboard</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Reviews">
+                                    <label>Reviews</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Ratings">
+                                    <label>Ratings</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Search">
+                                    <label>Search</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Wishlist">
+                                    <label>Wishlist</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Notifications">
+                                    <label>Notifications</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Multi-language">
+                                    <label>Multi-language</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Multi-currency">
+                                    <label>Multi-currency</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Newsletter">
+                                    <label>Newsletter</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="File Upload">
+                                    <label>File Upload</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="PDF Download">
+                                    <label>PDF Download</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Coupons">
+                                    <label>Coupons</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Referral Program">
+                                    <label>Referral Program</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Loyalty Program">
+                                    <label>Loyalty Program</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Membership">
+                                    <label>Membership</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Subscription">
+                                    <label>Subscription</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Quote Request">
+                                    <label>Quote Request</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Ticket System">
+                                    <label>Ticket System</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="sub-title" style="margin-bottom: 15px;">Niche-Specific Questions</div>
+                        <div class="sub-description">Questions tailored to your business type</div>
+                        <div id="nicheQuestions"></div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Technical Questions (Final) -->
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">4</div>
+                        <div>
+                            <div class="section-title">Technical Questions</div>
+                            <div class="section-description">Tell us about your current technical setup</div>
+                        </div>
+                    </div>
+
+                    <div class="sub-section">
+                        <div class="form-group">
+                            <label>Do you already have a domain?</label>
+                            <div class="radio-group" id="hasDomain">
+                                <div class="radio-item">
+                                    <input type="radio" name="hasDomain" value="Yes">
+                                    <label>Yes</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" name="hasDomain" value="No">
+                                    <label>No</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" name="hasDomain" value="Not Sure">
+                                    <label>Not Sure</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="domainName">If yes, what is your domain?</label>
+                            <input type="text" id="domainName" placeholder="e.g., www.yourbusiness.com">
+                        </div>
+                    </div>
+
+                    <div class="sub-section">
+                        <div class="form-group">
+                            <label>Do you already have hosting?</label>
+                            <div class="radio-group" id="hasHosting">
+                                <div class="radio-item">
+                                    <input type="radio" name="hasHosting" value="Yes">
+                                    <label>Yes</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" name="hasHosting" value="No">
+                                    <label>No</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" name="hasHosting" value="Not Sure">
+                                    <label>Not Sure</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-section">
+                        <div class="form-group">
+                            <label>Do you have an existing website or app?</label>
+                            <div class="radio-group" id="existingWebsite">
+                                <div class="radio-item">
+                                    <input type="radio" name="existingWebsite" value="Yes">
+                                    <label>Yes</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" name="existingWebsite" value="No">
+                                    <label>No</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="existingUrl">If yes, what is the current URL?</label>
+                            <input type="text" id="existingUrl" placeholder="e.g., www.old-website.com">
+                        </div>
+                    </div>
+
+                    <div class="sub-section">
+                        <div class="form-group">
+                            <label>Do you need Android, iPhone, Web, or all of them?</label>
+                            <div class="checkbox-grid" id="platforms">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Android App">
+                                    <label>📱 Android</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="iPhone App">
+                                    <label>🍎 iPhone</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" value="Web">
+                                    <label>🌐 Web</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">← Back</button>
+                    <button type="submit" class="btn btn-primary btn-next">Generate Website URL →</button>
+                </div>
+            </form>
+
+            <!-- URL Result -->
+            <div class="url-result" id="urlResult">
+                <div class="success-icon">🎉</div>
+                <div class="success-title">Your Website is Ready!</div>
+                <p class="success-text">Your website details have been submitted successfully. Here's your website URL:</p>
+
+                <div class="url-box">
+                    <div class="url-label">Your Website URL</div>
+                    <div class="url-value" id="finalUrl">-</div>
+                    <div class="url-actions">
+                        <button class="btn-copy" onclick="copyUrl(this)">📋 Copy URL</button>
+                        <button class="btn-copy" onclick="window.open(document.getElementById('finalUrl').textContent, '_blank')">🌐 Open Website</button>
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-title">Order Summary</div>
+                    <div class="summary-item">
+                        <span class="summary-label">Business:</span>
+                        <span class="summary-value" id="sumBusiness">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Website Level:</span>
+                        <span class="summary-value" id="sumLevel">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Business Name:</span>
+                        <span class="summary-value" id="sumName">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Project Type:</span>
+                        <span class="summary-value" id="sumProjectType">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Pages Selected:</span>
+                        <span class="summary-value" id="sumPages">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Features Selected:</span>
+                        <span class="summary-value" id="sumFeatures">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Social Media:</span>
+                        <span class="summary-value" id="sumSocial">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load order data from localStorage
+        const orderData = JSON.parse(localStorage.getItem('systomicOrder'));
+
+        if (!orderData) {
+            window.location.href = 'index.html';
+        }
+
+        // Display business badge
+        document.getElementById('businessBadge').textContent = `${orderData.businessTypeLabel} • ${orderData.websiteLevelLabel} Level`;
+
+        // Populate year select
+        const yearSelect = document.getElementById('yearEstablished');
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear; year >= 1950; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        }
+
+        // Checkbox selection styling
+        document.querySelectorAll('.checkbox-item').forEach(item => {
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        });
+
+        // Radio selection styling
+        document.querySelectorAll('.radio-item').forEach(item => {
+            const radio = item.querySelector('input[type="radio"]');
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    item.classList.add('selected');
+                    // Remove selected from siblings
+                    const name = this.name;
+                    document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+                        if (r !== this) {
+                            r.closest('.radio-item').classList.remove('selected');
+                        }
+                    });
+                }
+            });
+        });
+
+        // Social media link inputs
+        const socialMediaInputs = document.getElementById('socialMediaInputs');
+
+        document.querySelectorAll('.social-check').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                handleSocialMediaChange();
+            });
+        });
+
+        function handleSocialMediaChange() {
+            const selected = document.querySelectorAll('.social-check:checked');
+            let html = '';
+
+            selected.forEach(cb => {
+                const platform = cb.value;
+                const id = 'social-' + platform.toLowerCase().replace(/\s+/g, '-');
+                const placeholders = {
+                    'Facebook': 'https://facebook.com/yourpage',
+                    'Instagram': 'https://instagram.com/yourhandle',
+                    'LinkedIn': 'https://linkedin.com/company/yourcompany',
+                    'YouTube': 'https://youtube.com/@yourchannel',
+                    'X': 'https://x.com/yourhandle',
+                    'Pinterest': 'https://pinterest.com/yourhandle',
+                    'TikTok': 'https://tiktok.com/@yourhandle',
+                    'WhatsApp': 'https://wa.me/yournumber'
+                };
+                html += `
+                    <div style="margin-bottom: 15px;">
+                        <label for="${id}" style="font-size: 0.85rem; color: #667eea;">${platform} Page Link:</label>
+                        <input type="url" id="${id}" placeholder="${placeholders[platform] || 'Enter link...'}">
+                    </div>
+                `;
+            });
+
+            socialMediaInputs.innerHTML = html;
+
+            // Show/hide the container based on whether platforms are selected
+            if (selected.length > 0) {
+                socialMediaInputs.classList.add('has-content');
+            } else {
+                socialMediaInputs.classList.remove('has-content');
+            }
+        }
+
+        // Niche-specific questions data
+        const nicheQuestions = {
+            'hospitals': {
+                icon: '🏥',
+                title: 'Hospital / Clinic Questions',
+                questions: [
+                    'Doctors and specialties',
+                    'Appointment booking',
+                    'Emergency contact',
+                    'Departments',
+                    'Insurance accepted',
+                    'Patient portal',
+                    'Lab reports',
+                    'Telemedicine'
+                ]
+            },
+            'salons': {
+                icon: '💇',
+                title: 'Salon / Spa Questions',
+                questions: [
+                    'Services and pricing',
+                    'Staff profiles',
+                    'Online appointments',
+                    'Membership plans',
+                    'Gift cards',
+                    'Before/after gallery'
+                ]
+            },
+            'hotels': {
+                icon: '🏨',
+                title: 'Hotel / Resort Questions',
+                questions: [
+                    'Room types',
+                    'Availability calendar',
+                    'Online booking',
+                    'Check-in/check-out times',
+                    'Amenities',
+                    'Nearby attractions',
+                    'Packages'
+                ]
+            },
+            'real-estate': {
+                icon: '🏢',
+                title: 'Real Estate Questions',
+                questions: [
+                    'Property listings',
+                    'Property filters',
+                    'Agent profiles',
+                    'Virtual tours',
+                    'Mortgage calculator',
+                    'Map search',
+                    'Inquiry forms'
+                ]
+            },
+            'restaurants': {
+                icon: '🍽️',
+                title: 'Restaurant Questions',
+                questions: [
+                    'Menu',
+                    'Online ordering',
+                    'Table reservations',
+                    'Delivery areas',
+                    'Food gallery',
+                    'Offers',
+                    'Dietary information'
+                ]
+            },
+            'gyms': {
+                icon: '💪',
+                title: 'Gym / Fitness Questions',
+                questions: [
+                    'Membership plans',
+                    'Trainers',
+                    'Class schedule',
+                    'Progress tracking',
+                    'Diet plans',
+                    'Online coaching'
+                ]
+            },
+            'advisory': {
+                icon: '⚖️',
+                title: 'Law Firm / Advisory Questions',
+                questions: [
+                    'Practice areas',
+                    'Lawyer profiles',
+                    'Consultation booking',
+                    'Case inquiry',
+                    'Legal resources'
+                ]
+            }
+        };
+
+        // Render niche-specific questions
+        function renderNicheQuestions() {
+            const container = document.getElementById('nicheQuestions');
+            const niche = nicheQuestions[orderData.businessType];
+
+            if (!niche) {
+                container.innerHTML = '<p style="color: #8892b0;">No specific questions for this business type.</p>';
+                return;
+            }
+
+            let html = `
+                <div class="niche-section">
+                    <div class="niche-title">
+                        <span class="icon">${niche.icon}</span>
+                        ${niche.title}
+                    </div>
+                    <div class="checkbox-grid">
+            `;
+
+            niche.questions.forEach(question => {
+                const id = question.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                html += `
+                    <div class="checkbox-item">
+                        <input type="checkbox" value="${question}" id="niche-${id}">
+                        <label for="niche-${id}">${question}</label>
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+            container.innerHTML = html;
+
+            // Add event listeners to new checkboxes
+            container.querySelectorAll('.checkbox-item').forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+            });
+        }
+
+        renderNicheQuestions();
+
+        // Helper function to get selected checkboxes
+        function getSelectedValues(containerId) {
+            const container = document.getElementById(containerId);
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        // Get selected radio value
+        function getRadioValue(name) {
+            const radio = document.querySelector(`input[name="${name}"]:checked`);
+            return radio ? radio.value : null;
+        }
+
+        // Collect social media links
+        function getSocialMediaLinks() {
+            const links = {};
+            document.querySelectorAll('.social-check:checked').forEach(cb => {
+                const platform = cb.value;
+                const id = 'social-' + platform.toLowerCase().replace(/\s+/g, '-');
+                const input = document.getElementById(id);
+                if (input && input.value.trim()) {
+                    links[platform] = input.value.trim();
+                } else {
+                    links[platform] = '';
+                }
+            });
+            return links;
+        }
+
+        // Generate URL from business name
+        function generateUrl(businessName) {
+            // Convert to lowercase, remove special characters, replace spaces with hyphens
+            let slug = businessName.toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+
+            // Add systomic domain
+            return `https://${slug}.systomic.com`;
+        }
+
+        // Form submission
+        document.getElementById('detailsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Validate required fields
+            const companyDescription = document.getElementById('companyDescription').value.trim();
+            const yearEstablished = document.getElementById('yearEstablished').value;
+            const topGoals = document.getElementById('topGoals').value.trim();
+            const competitorLikes = document.getElementById('competitorLikes').value.trim();
+
+            if (!companyDescription) {
+                alert('Please enter your company description');
+                return;
+            }
+
+            if (!yearEstablished) {
+                alert('Please select the year your business was established');
+                return;
+            }
+
+            if (!topGoals) {
+                alert('Please list your top 3 business goals');
+                return;
+            }
+
+            if (!competitorLikes) {
+                alert('Please list competitor websites you like');
+                return;
+            }
+
+            // Collect all data
+            const detailsData = {
+                companyDescription: companyDescription,
+                yearEstablished: yearEstablished,
+                projectType: getRadioValue('projectType'),
+                businessGoals: getSelectedValues('businessGoals'),
+                topGoals: topGoals,
+                competitorLikes: competitorLikes,
+                featuresLiked: document.getElementById('featuresLiked').value,
+                featuresDisliked: document.getElementById('featuresDisliked').value,
+                targetAudience: getSelectedValues('targetAudience'),
+                websitePages: getSelectedValues('websitePages'),
+                socialMedia: getSocialMediaLinks(),
+                socialMediaPlatforms: getSelectedValues('socialMedia'),
+                websiteFeatures: getSelectedValues('websiteFeatures'),
+                nicheSelections: getSelectedValues('nicheQuestions'),
+                hasDomain: getRadioValue('hasDomain'),
+                domainName: document.getElementById('domainName').value,
+                hasHosting: getRadioValue('hasHosting'),
+                existingWebsite: getRadioValue('existingWebsite'),
+                existingUrl: document.getElementById('existingUrl').value,
+                platforms: getSelectedValues('platforms')
+            };
+
+            // Save to localStorage
+            localStorage.setItem('systomicDetails', JSON.stringify(detailsData));
+
+            // Save complete submission to admin dashboard collection
+            saveSubmissionToAdmin(orderData, detailsData);
+
+            // Generate URL
+            const url = generateUrl(orderData.businessName);
+            document.getElementById('finalUrl').textContent = url;
+
+            // Populate summary
+            document.getElementById('sumBusiness').textContent = orderData.businessTypeLabel;
+            document.getElementById('sumLevel').textContent = orderData.websiteLevelLabel;
+            document.getElementById('sumName').textContent = orderData.businessName;
+            document.getElementById('sumProjectType').textContent = detailsData.projectType || 'Not selected';
+            document.getElementById('sumPages').textContent = detailsData.websitePages.length > 0 ? detailsData.websitePages.join(', ') : 'None selected';
+            document.getElementById('sumFeatures').textContent = detailsData.websiteFeatures.length > 0 ? detailsData.websiteFeatures.join(', ') : 'None selected';
+            document.getElementById('sumSocial').textContent = detailsData.socialMediaPlatforms.length > 0 ? detailsData.socialMediaPlatforms.join(', ') : 'None selected';
+
+            // Show result
+            document.getElementById('detailsForm').style.display = 'none';
+            document.getElementById('urlResult').classList.add('show');
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Save complete submission to admin dashboard
+        function saveSubmissionToAdmin(orderData, detailsData) {
+            const submissions = JSON.parse(localStorage.getItem('systomicSubmissions') || '[]');
+            
+            const submission = {
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                order: orderData,
+                details: detailsData,
+                url: generateUrl(orderData.businessName)
+            };
+            
+            submissions.push(submission);
+            localStorage.setItem('systomicSubmissions', JSON.stringify(submissions));
+        }
+
+        // Copy URL function
+        function copyUrl(btn) {
+            const url = document.getElementById('finalUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy URL';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

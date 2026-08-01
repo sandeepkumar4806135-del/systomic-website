@@ -1,0 +1,12 @@
+{
+  "name": "systomic-website-form",
+  "version": "1.0.0",
+  "description": "SYSTOMIC Digital Systems - Website Order Form & Admin Dashboard",
+  "scripts": {
+    "start": "serve .",
+    "dev": "serve ."
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  }
+}
