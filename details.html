@@ -723,7 +723,7 @@
         }
     </style>
 </head>
-<body>
+<body ontouchstart="">
     <div class="container">
         <div class="header">
             <h1>Website Details Questionnaire</h1>
@@ -732,7 +732,7 @@
         </div>
 
         <div class="form-container">
-            <form id="detailsForm">
+            <form id="detailsForm" action="javascript:void(0);" method="post" autocomplete="on">
                 <!-- Section 1: Business Information -->
                 <div class="section">
                     <div class="section-header">
@@ -1223,7 +1223,7 @@
 
                 <div class="button-group">
                     <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">← Back</button>
-                    <button type="submit" class="btn btn-primary btn-next">Submit Your Details →</button>
+                    <button type="submit" class="btn btn-primary btn-next" id="detailsSubmitBtn">Submit Your Details →</button>
                 </div>
             </form>
 
@@ -1555,32 +1555,42 @@
 
         // Form submission
         document.getElementById('detailsForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+            if (e.preventDefault) e.preventDefault();
+            e.returnValue = false; // For older browsers
 
             // Validate required fields
-            const companyDescription = document.getElementById('companyDescription').value.trim();
-            const yearEstablished = document.getElementById('yearEstablished').value;
-            const topGoals = document.getElementById('topGoals').value.trim();
-            const competitorLikes = document.getElementById('competitorLikes').value.trim();
+            const companyDescriptionField = document.getElementById('companyDescription');
+            const yearEstablishedField = document.getElementById('yearEstablished');
+            const topGoalsField = document.getElementById('topGoals');
+            const competitorLikesField = document.getElementById('competitorLikes');
+
+            const companyDescription = companyDescriptionField ? companyDescriptionField.value.trim() : '';
+            const yearEstablished = yearEstablishedField ? yearEstablishedField.value : '';
+            const topGoals = topGoalsField ? topGoalsField.value.trim() : '';
+            const competitorLikes = competitorLikesField ? competitorLikesField.value.trim() : '';
 
             if (!companyDescription) {
                 alert('Please enter your company description');
-                return;
+                if (companyDescriptionField) companyDescriptionField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
             }
 
             if (!yearEstablished) {
                 alert('Please select the year your business was established');
-                return;
+                if (yearEstablishedField) yearEstablishedField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
             }
 
             if (!topGoals) {
                 alert('Please list your top 3 business goals');
-                return;
+                if (topGoalsField) topGoalsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
             }
 
             if (!competitorLikes) {
                 alert('Please list competitor websites you like');
-                return;
+                if (competitorLikesField) competitorLikesField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
             }
 
             // Collect all data
@@ -1607,8 +1617,26 @@
                 platforms: getSelectedValues('platforms')
             };
 
+            // Show loading indicator
+            const detailsSubmitBtn = document.getElementById('detailsSubmitBtn');
+            if (detailsSubmitBtn) {
+                detailsSubmitBtn.textContent = 'Submitting...';
+                detailsSubmitBtn.disabled = true;
+                detailsSubmitBtn.style.opacity = '0.7';
+            }
+
             // Save to localStorage
-            localStorage.setItem('systomicDetails', JSON.stringify(detailsData));
+            try {
+                localStorage.setItem('systomicDetails', JSON.stringify(detailsData));
+            } catch (err) {
+                alert('Unable to save your data. Please try again.');
+                if (detailsSubmitBtn) {
+                    detailsSubmitBtn.textContent = 'Submit Your Details →';
+                    detailsSubmitBtn.disabled = false;
+                    detailsSubmitBtn.style.opacity = '1';
+                }
+                return false;
+            }
 
             // Save complete submission to admin dashboard collection
             saveSubmissionToAdmin(orderData, detailsData);
@@ -1628,6 +1656,8 @@
 
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            return false; // Prevent form submission on all browsers
         });
 
         // Save complete submission to admin dashboard

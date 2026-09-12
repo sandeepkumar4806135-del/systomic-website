@@ -511,6 +511,18 @@
             font-weight: 500;
         }
 
+        /* Touch device improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn, .option-card, .checkbox-item, .radio-item, .color-swatch, .theme-card {
+                -webkit-tap-highlight-color: rgba(102, 126, 234, 0.3);
+                touch-action: manipulation;
+            }
+            
+            .btn:active, .option-card:active, .checkbox-item:active, .radio-item:active {
+                transform: scale(0.98);
+            }
+        }
+
         @media (max-width: 768px) {
             .form-container {
                 padding: 25px;
@@ -530,6 +542,7 @@
 
             .btn {
                 width: 100%;
+                min-height: 48px; /* Minimum touch target size */
             }
 
             .btn-next {
@@ -538,7 +551,7 @@
         }
     </style>
 </head>
-<body>
+<body ontouchstart="">
     <div class="container">
         <div class="form-container">
             <div class="progress-bar">
@@ -560,7 +573,7 @@
                 </div>
             </div>
 
-            <form id="orderForm">
+            <form id="orderForm" action="javascript:void(0);" method="post" autocomplete="on">
                 <!-- Step 1: Business Selection -->
                 <div class="form-step active" data-step="1">
                     <h2 class="step-title">Select Your Business Type</h2>
@@ -1090,7 +1103,8 @@
 
         // Form validation and submission
         document.getElementById('orderForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+            if (e.preventDefault) e.preventDefault();
+            e.returnValue = false; // For older browsers
 
             // Validate Step 3 fields (if coming from step 3 validation, all should be valid)
             const fields = ['businessName', 'phone', 'email', 'address', 'whatsapp', 'adminEmail', 'adminPassword'];
@@ -1098,19 +1112,20 @@
 
             fields.forEach(fieldId => {
                 const field = document.getElementById(fieldId);
+                if (!field) return; // Skip if field not found
                 const formGroup = field.closest('.form-group');
 
-                if (!field.value.trim()) {
-                    formGroup.classList.add('error');
+                if (!field.value || !field.value.trim()) {
+                    if (formGroup) formGroup.classList.add('error');
                     isValid = false;
                 } else {
-                    formGroup.classList.remove('error');
+                    if (formGroup) formGroup.classList.remove('error');
 
                     // Email validation
                     if (field.type === 'email') {
                         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                         if (!emailRegex.test(field.value)) {
-                            formGroup.classList.add('error');
+                            if (formGroup) formGroup.classList.add('error');
                             isValid = false;
                         }
                     }
@@ -1118,15 +1133,20 @@
             });
 
             if (!isValid) {
-                return;
+                // Scroll to first error on mobile
+                const firstError = document.querySelector('.form-group.error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return false;
             }
 
             // Save form data to localStorage including business assets
             const formData = {
                 businessType: selectedBusiness,
-                businessTypeLabel: businessLabels[selectedBusiness],
+                businessTypeLabel: businessLabels[selectedBusiness] || 'Unknown',
                 websiteLevel: selectedLevel,
-                websiteLevelLabel: levelLabels[selectedLevel],
+                websiteLevelLabel: levelLabels[selectedLevel] || 'Unknown',
                 businessName: document.getElementById('businessName').value,
                 phone: document.getElementById('phone').value,
                 email: document.getElementById('email').value,
@@ -1141,12 +1161,27 @@
                 videosCount: uploadedVideos.length
             };
 
-            localStorage.setItem('systomicOrder', JSON.stringify(formData));
+            try {
+                localStorage.setItem('systomicOrder', JSON.stringify(formData));
+            } catch (err) {
+                alert('Unable to save your data. Please try again.');
+                return false;
+            }
 
-            // Redirect to details page (using replace for better mobile compatibility)
+            // Show loading indicator for mobile users
+            const submitBtn = document.querySelector('#orderForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.textContent = 'Submitting...';
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.7';
+            }
+
+            // Redirect to details page (longer delay for mobile compatibility)
             setTimeout(function() {
                 window.location.href = 'details.html';
-            }, 100);
+            }, 500);
+
+            return false; // Prevent form submission on all browsers
         });
 
         // Remove error on input
