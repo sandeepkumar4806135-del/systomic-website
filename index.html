@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -594,7 +594,7 @@
                 </div>
             </div>
 
-            <form id="orderForm" action="javascript:void(0);" method="post" autocomplete="on">
+            <form id="orderForm" autocomplete="on" onsubmit="return false;">
                 <!-- Step 1: Business Selection -->
                 <div class="form-step active" data-step="1">
                     <h2 class="step-title">Select Your Business Type</h2>
@@ -777,7 +777,7 @@
 
                     <div class="button-group">
                         <button type="button" class="btn btn-secondary" id="prevStep4">← Back</button>
-                        <button type="submit" class="btn btn-primary btn-next">Submit Order →</button>
+                        <button type="submit" class="btn btn-primary btn-next" id="submitOrderBtn">Submit Order →</button>
                     </div>
                 </div>
             </form>
@@ -1122,12 +1122,45 @@
             });
         }
 
-        // Form validation and submission
+        // Comprehensive form submission handler for ALL devices including mobile
+        // Handle form submission via submit event (works on most browsers)
         document.getElementById('orderForm').addEventListener('submit', function(e) {
-            if (e.preventDefault) e.preventDefault();
-            e.returnValue = false; // For older browsers
+            e.preventDefault();
+            e.stopPropagation();
+            submitOrder();
+            return false;
+        });
 
-            // Validate Step 3 fields (if coming from step 3 validation, all should be valid)
+        // Handle mobile devices that don't trigger submit event properly
+        // Use touchstart for faster response on mobile
+        var submitBtn = document.getElementById('submitOrderBtn');
+        if (submitBtn) {
+            // For mobile: use touchstart for immediate response
+            submitBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                // Small delay to allow button press visual feedback
+                setTimeout(function() {
+                    submitOrder();
+                }, 50);
+            }, { passive: false });
+
+            // Also handle click for desktop and as fallback
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                submitOrder();
+            });
+        }
+
+        // Fallback: If form submit event doesn't fire on some mobile browsers,
+        // manually trigger it when submit button is interacted with
+        document.addEventListener('touchstart', function(e) {
+            if (e.target && e.target.id === 'submitOrderBtn') {
+                // Already handled by the button's touchstart listener above
+            }
+        }, { passive: true });
+
+        function submitOrder() {
+            // Validation
             const fields = ['businessName', 'phone', 'email', 'address', 'whatsapp', 'adminEmail', 'adminPassword'];
             let isValid = true;
 
@@ -1225,7 +1258,7 @@
             }, 500);
 
             return false; // Prevent form submission on all browsers
-        });
+        }
 
         // Remove error on input
         document.querySelectorAll('input, textarea').forEach(input => {
@@ -1250,3 +1283,4 @@
     </script>
 </body>
 </html>
+
