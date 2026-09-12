@@ -6,6 +6,26 @@
     <title>SYSTOMIC Admin Dashboard</title>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2267459537864832"
          crossorigin="anonymous"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+        // Firebase configuration - Replace with your own Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemoKeyReplaceWithYourOwn",
+            authDomain: "systomic-website.firebaseapp.com",
+            databaseURL: "https://systomic-website-default-rtdb.firebaseio.com",
+            projectId: "systomic-website",
+            storageBucket: "systomic-website.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+        
+        // Initialize Firebase (only if not already initialized)
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -763,6 +783,32 @@
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('dashboard').classList.add('show');
             renderClients();
+            setupFirebaseListener();
+        }
+
+        // Setup Firebase real-time listener
+        function setupFirebaseListener() {
+            try {
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    const database = firebase.database();
+                    const submissionsRef = database.ref('submissions');
+                    
+                    // Listen for new submissions in real-time
+                    submissionsRef.on('value', function(snapshot) {
+                        allSubmissions = [];
+                        snapshot.forEach(function(childSnapshot) {
+                            const data = childSnapshot.val();
+                            data.firebaseKey = childSnapshot.key;
+                            allSubmissions.push(data);
+                        });
+                        renderClients();
+                    });
+                    
+                    console.log('Firebase real-time listener active');
+                }
+            } catch (err) {
+                console.warn('Firebase listener error:', err);
+            }
         }
 
         // Logout
@@ -782,10 +828,8 @@
             document.getElementById('navClients').classList.add('active');
         }
 
-        // Get all submissions
-        function getSubmissions() {
-            return JSON.parse(localStorage.getItem('systomicSubmissions') || '[]');
-        }
+        // Global submissions array
+        let allSubmissions = [];
 
         // Get status label
         function getStatusLabel(status) {
@@ -798,15 +842,15 @@
             return 'status-' + s.toLowerCase().replace(/\s+/g, '-');
         }
 
-        // Render clients
+        // Render clients from Firebase data
         function renderClients() {
-            const submissions = getSubmissions();
+            const submissions = allSubmissions;
             
             // Stats
             const statsGrid = document.getElementById('statsGrid');
             const totalClients = submissions.length;
-            const totalRestaurants = submissions.filter(s => s.order.businessType === 'restaurants').length;
-            const totalPremium = submissions.filter(s => s.order.websiteLevel === 'premium').length;
+            const totalRestaurants = submissions.filter(s => s.order && s.order.businessType === 'restaurants').length;
+            const totalPremium = submissions.filter(s => s.order && s.order.websiteLevel === 'premium').length;
             const totalNew = submissions.filter(s => (s.status || 'New') === 'New').length;
             
             statsGrid.innerHTML = `
@@ -842,10 +886,14 @@
             }
 
             // Sort by newest first
-            submissions.sort((a, b) => b.id - a.id);
+            submissions.sort((a, b) => {
+                const dateA = new Date(a.date || 0);
+                const dateB = new Date(b.date || 0);
+                return dateB - dateA;
+            });
 
             clientsList.innerHTML = submissions.map(submission => {
-                const initial = submission.order.businessName.charAt(0).toUpperCase();
+                const initial = submission.order && submission.order.businessName ? submission.order.businessName.charAt(0).toUpperCase() : '?';
                 const status = getStatusLabel(submission.status);
                 const statusClass = getStatusClass(submission.status);
                 return `
@@ -886,14 +934,28 @@
         function updateStatus(id, newStatus, event) {
             event.stopPropagation();
             
-            const submissions = getSubmissions();
-            const submission = submissions.find(s => s.id === id);
+            // Find submission in allSubmissions array
+            const submission = allSubmissions.find(s => s.id === id || s.firebaseKey === id);
             
-            if (submission) {
-                submission.status = newStatus;
-                localStorage.setItem('systomicSubmissions', JSON.stringify(submissions));
-                renderClients();
+            if (submission && submission.firebaseKey) {
+                try {
+                    if (typeof firebase !== 'undefined' && firebase.database) {
+                        const database = firebase.database();
+                        database.ref('submissions/' + submission.firebaseKey).update({
+                            status: newStatus
+                        }).then(function() {
+                            console.log('Status updated in Firebase');
+                        }).catch(function(error) {
+                            console.error('Firebase update error:', error);
+                        });
+                    }
+                } catch (err) {
+                    console.warn('Firebase update error:', err);
+                }
             }
+            
+            // Close all dropdowns
+            document.querySelectorAll('.status-dropdown-menu').forEach(menu => menu.classList.remove('show'));
         }
 
         // Close dropdowns when clicking outside
@@ -905,8 +967,7 @@
 
         // Show client detail
         function showClientDetail(id) {
-            const submissions = getSubmissions();
-            const submission = submissions.find(s => s.id === id);
+            const submission = allSubmissions.find(s => s.id === id || s.firebaseKey === id);
 
             if (!submission) {
                 alert('Client not found');

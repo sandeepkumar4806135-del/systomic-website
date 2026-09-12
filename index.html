@@ -6,6 +6,26 @@
     <title>SYSTOMIC Digital Systems - Website Order Form</title>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2267459537864832"
          crossorigin="anonymous"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+        // Firebase configuration - Replace with your own Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemoKeyReplaceWithYourOwn",
+            authDomain: "systomic-website.firebaseapp.com",
+            databaseURL: "https://systomic-website-default-rtdb.firebaseio.com",
+            projectId: "systomic-website",
+            storageBucket: "systomic-website.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+        
+        // Initialize Firebase (only if not already initialized)
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1161,11 +1181,11 @@
                 videosCount: uploadedVideos.length
             };
 
+            // Save to localStorage for page transition
             try {
                 localStorage.setItem('systomicOrder', JSON.stringify(formData));
             } catch (err) {
-                alert('Unable to save your data. Please try again.');
-                return false;
+                console.warn('LocalStorage not available');
             }
 
             // Show loading indicator for mobile users
@@ -1174,6 +1194,28 @@
                 submitBtn.textContent = 'Submitting...';
                 submitBtn.disabled = true;
                 submitBtn.style.opacity = '0.7';
+            }
+
+            // Save to Firebase Realtime Database
+            try {
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    const database = firebase.database();
+                    const submissionRef = database.ref('submissions').push();
+                    submissionRef.set({
+                        id: submissionRef.key,
+                        date: new Date().toISOString(),
+                        status: 'New',
+                        order: formData,
+                        details: null,
+                        url: formData.businessName ? 'https://' + formData.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.systomic.com' : ''
+                    }).then(function() {
+                        console.log('Order submission saved to Firebase');
+                    }).catch(function(error) {
+                        console.error('Firebase save error:', error);
+                    });
+                }
+            } catch (err) {
+                console.warn('Firebase not available:', err);
             }
 
             // Redirect to details page (longer delay for mobile compatibility)
