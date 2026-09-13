@@ -1152,42 +1152,11 @@ clientsList.innerHTML = submissions.map(submission => {
                         <span class="badge badge-purple">${order.businessTypeLabel}</span>
                         <span class="badge badge-green">${order.websiteLevelLabel}</span>
                         <span class="badge badge-yellow">Submitted ${date}</span>
-<span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('${id}', event)">${statusLabel} ▾
+                        <span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('${id}', event)">${statusLabel} ▾
                             <div class="status-dropdown-menu" id="statusMenu-${id}">
                                 <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus('${id}', 'New', event)">New</div>
                                 <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus('${id}', 'In Review', event)">In Review</div>
                                 <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus('${id}', 'Approved', event)">Approved</div>
-                            </div>
-                        </span>
-
-
-<span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('detail-' + ${submission.id}, event)">${statusLabel} ▾
-                            <div class="status-dropdown-menu" id="statusMenu-detail-${submission.id}">
-                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'New', event)">New</div>
-                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'In Review', event)">In Review</div>
-                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'Approved', event)">Approved</div>
-                            </div>
-                        </span>
-                        <span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('detail-' + ${submission.id}, event)">${statusLabel} ▾
-                            <div class="status-dropdown-menu" id="statusMenu-detail-${submission.id}">
-                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'New', event)">New</div>
-                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'In Review', event)">In Review</div>
-                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'Approved', event)">Approved</div>
-                            </div>
-                        </span>
-                    </div>
-<span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('detail-' + ${submission.id}, event)">${statusLabel} ▾
-                            <div class="status-dropdown-menu" id="statusMenu-detail-${submission.id}">
-                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'New', event)">New</div>
-                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'In Review', event)">In Review</div>
-                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'Approved', event)">Approved</div>
-                            </div>
-                        </span>
-                        <span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('detail-' + ${submission.id}, event)">${statusLabel} ▾
-                            <div class="status-dropdown-menu" id="statusMenu-detail-${submission.id}">
-                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'New', event)">New</div>
-                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'In Review', event)">In Review</div>
-                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'Approved', event)">Approved</div>
                             </div>
                         </span>
                     </div>
