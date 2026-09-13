@@ -697,6 +697,28 @@
             }
         }
     </style>
+    <style>
+        .firebase-error-banner {
+            display: none;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .firebase-error-banner.show { display: block; }
+        .firebase-error-banner strong { color: #ef4444; }
+        .firebase-error-banner code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+    </style>
 </head>
 <body ontouchstart="">
     <!-- Login Page -->
@@ -741,6 +763,13 @@
         <div class="main-content">
             <!-- Clients List View -->
             <div id="viewClients">
+        <div class="firebase-error-banner" id="firebaseErrorBanner">
+            <strong>⚠️ Database connection problem:</strong> <span id="firebaseErrorMsg"></span>
+            If this says <code>Permission denied</code>, open the
+            <a href="https://console.firebase.google.com/project/systomic-website/database/rules" target="_blank" style="color:#667eea;">Firebase Console → Realtime Database → Rules</a>
+            and set rules to allow read/write for <code>submissions</code>.
+        </div>
+
                 <div class="page-title">Clients</div>
                 <div class="stats-grid" id="statsGrid"></div>
                 <div class="clients-list" id="clientsList"></div>
@@ -779,54 +808,155 @@
             }
         });
 
-        // Show dashboard
-        function showDashboard() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('dashboard').classList.add('show');
-            renderClients();
-            setupFirebaseListener();
-        }
+// Show dashboard
+function showDashboard() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('dashboard').classList.add('show');
+    loadSubmissionsFromFirebase();
+    setupFirebaseListener();
+}
 
-        // Setup Firebase real-time listener
-        function setupFirebaseListener() {
-            try {
-                if (typeof firebase !== 'undefined' && firebase.database) {
-                    const database = firebase.database();
-                    const submissionsRef = database.ref('submissions');
-                    
-                    // Listen for new submissions in real-time
-                    submissionsRef.on('value', function(snapshot) {
-                        allSubmissions = [];
-                        snapshot.forEach(function(childSnapshot) {
-                            const data = childSnapshot.val();
-                            data.firebaseKey = childSnapshot.key;
-                            allSubmissions.push(data);
-                        });
-                        renderClients();
-                    });
-                    
-                    console.log('Firebase real-time listener active');
-                }
-            } catch (err) {
-                console.warn('Firebase listener error:', err);
-            }
+// Load submissions from Firebase
+function loadSubmissionsFromFirebase() {
+    try {
+        if (typeof firebase === 'undefined' || !firebase.database) {
+            console.error('Firebase not available');
+            return;
         }
-
-        // Logout
-        function logout() {
-            localStorage.removeItem('systomicAdminLoggedIn');
-            window.location.reload();
-        }
-
-        // View switching
-        function showView(view) {
-            document.getElementById('viewClients').style.display = view === 'clients' ? 'block' : 'none';
-            document.getElementById('viewDetail').classList.toggle('show', view === 'detail');
+        
+        const db = firebase.database();
+        const submissionsRef = db.ref('submissions');
+        
+        submissionsRef.once('value', function(snapshot) {
+            hideFirebaseError();
+            allSubmissions = [];
             
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            document.getElementById('navClients').classList.add('active');
+            if (snapshot.exists()) {
+                snapshot.forEach(function(childSnapshot) {
+                    const data = childSnapshot.val();
+                    data.firebaseKey = childSnapshot.key;
+                    allSubmissions.push(data);
+                });
+            }
+            
+            allSubmissions.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+            renderClients();
+        }, function(err) {
+            console.error('Firebase load error:', err);
+            showFirebaseError(err.message + ' (code: ' + err.code + ')');
+            renderClients();
+        });
+    } catch (err) {
+        console.error('Firebase load error:', err);
+    }
+}
+
+// Setup Firebase real-time listener
+function setupFirebaseListener() {
+    try {
+        if (typeof firebase === 'undefined' || !firebase.database) {
+            console.warn('Firebase not available');
+            return;
+        }
+        
+        const db = firebase.database();
+        const submissionsRef = db.ref('submissions');
+        
+        submissionsRef.on('child_added', function(snapshot) {
+            const data = snapshot.val();
+            data.firebaseKey = snapshot.key;
+            
+            const exists = allSubmissions.some(s => s.firebaseKey === data.firebaseKey);
+            if (!exists) {
+                allSubmissions.unshift(data);
+                renderClients();
+                showNewSubmissionNotification(data.order?.businessName || 'New submission');
+            }
+        }, function(err) {
+            console.error('Firebase listener error:', err);
+            showFirebaseError(err.message + ' (code: ' + err.code + ')');
+        });
+        
+        submissionsRef.on('child_changed', function(snapshot) {
+            const data = snapshot.val();
+            data.firebaseKey = snapshot.key;
+            
+            const index = allSubmissions.findIndex(s => s.firebaseKey === data.firebaseKey);
+            if (index !== -1) {
+                allSubmissions[index] = data;
+                renderClients();
+            }
+        }, function(err) {
+            console.error('Firebase listener error:', err);
+            showFirebaseError(err.message + ' (code: ' + err.code + ')');
+        });
+        
+        console.log('Real-time Firebase listener active');
+    } catch (err) {
+        console.warn('Firebase listener error:', err);
+    }
+}
+
+// Firebase error banner helpers
+function showFirebaseError(msg) {
+    const banner = document.getElementById('firebaseErrorBanner');
+    const msgEl = document.getElementById('firebaseErrorMsg');
+    if (banner && msgEl) {
+        msgEl.textContent = msg;
+        banner.classList.add('show');
+    }
+}
+
+function hideFirebaseError() {
+    const banner = document.getElementById('firebaseErrorBanner');
+    if (banner) banner.classList.remove('show');
+}
+
+// Show notification for new submissions
+function showNewSubmissionNotification(businessName) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: #0a0e27;
+        padding: 15px 25px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        animation: slideInFromRight 0.3s ease;
+    `;
+    toast.textContent = `📋 New submission: ${businessName}`;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+// Logout
+function logout() {
+    localStorage.removeItem('systomicAdminLoggedIn');
+    allSubmissions = [];
+    window.location.reload();
+}
+
+
+// View switching
+function showView(view) {
+    document.getElementById('viewClients').style.display = view === 'clients' ? 'block' : 'none';
+    document.getElementById('viewDetail').classList.toggle('show', view === 'detail');
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.getElementById('navClients').classList.add('active');
         }
 
         // Global submissions array
@@ -893,6 +1023,35 @@
                 return dateB - dateA;
             });
 
+clientsList.innerHTML = submissions.map(submission => {
+                const initial = submission.order && submission.order.businessName ? submission.order.businessName.charAt(0).toUpperCase() : '?';
+                const status = getStatusLabel(submission.status);
+                const statusClass = getStatusClass(submission.status);
+                const key = submission.firebaseKey || submission.id;
+                const businessName = submission.order && submission.order.businessName ? submission.order.businessName : 'Unknown';
+                const businessType = submission.order && submission.order.businessTypeLabel ? submission.order.businessTypeLabel : 'Unknown';
+                const websiteLevel = submission.order && submission.order.websiteLevelLabel ? submission.order.websiteLevelLabel : 'Unknown';
+                const dateStr = submission.date ? new Date(submission.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+                return `
+                    <div class="client-card" onclick="showClientDetail('${key}')">
+                        <div class="client-info">
+                            <div class="client-avatar">${initial}</div>
+                            <div>
+                                <div class="client-name">${businessName}</div>
+                                <div class="client-meta">${businessType} • ${websiteLevel} • ${dateStr}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <span class="status-badge ${statusClass}">${status}</span>
+                            <select class="status-select" onchange="updateStatus('${key}', this.value, event)">
+                                <option value="New" ${status === 'New' ? 'selected' : ''}>New</option>
+                                <option value="In Review" ${status === 'In Review' ? 'selected' : ''}>In Review</option>
+                                <option value="Approved" ${status === 'Approved' ? 'selected' : ''}>Approved</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            }).join('');
             clientsList.innerHTML = submissions.map(submission => {
                 const initial = submission.order && submission.order.businessName ? submission.order.businessName.charAt(0).toUpperCase() : '?';
                 const status = getStatusLabel(submission.status);
@@ -993,6 +1152,37 @@
                         <span class="badge badge-purple">${order.businessTypeLabel}</span>
                         <span class="badge badge-green">${order.websiteLevelLabel}</span>
                         <span class="badge badge-yellow">Submitted ${date}</span>
+<span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('${id}', event)">${statusLabel} ▾
+                            <div class="status-dropdown-menu" id="statusMenu-${id}">
+                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus('${id}', 'New', event)">New</div>
+                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus('${id}', 'In Review', event)">In Review</div>
+                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus('${id}', 'Approved', event)">Approved</div>
+                            </div>
+                        </span>
+
+
+<span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('detail-' + ${submission.id}, event)">${statusLabel} ▾
+                            <div class="status-dropdown-menu" id="statusMenu-detail-${submission.id}">
+                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'New', event)">New</div>
+                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'In Review', event)">In Review</div>
+                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'Approved', event)">Approved</div>
+                            </div>
+                        </span>
+                        <span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('detail-' + ${submission.id}, event)">${statusLabel} ▾
+                            <div class="status-dropdown-menu" id="statusMenu-detail-${submission.id}">
+                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'New', event)">New</div>
+                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'In Review', event)">In Review</div>
+                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'Approved', event)">Approved</div>
+                            </div>
+                        </span>
+                    </div>
+<span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('detail-' + ${submission.id}, event)">${statusLabel} ▾
+                            <div class="status-dropdown-menu" id="statusMenu-detail-${submission.id}">
+                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'New', event)">New</div>
+                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'In Review', event)">In Review</div>
+                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'Approved', event)">Approved</div>
+                            </div>
+                        </span>
                         <span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('detail-' + ${submission.id}, event)">${statusLabel} ▾
                             <div class="status-dropdown-menu" id="statusMenu-detail-${submission.id}">
                                 <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'New', event)">New</div>

@@ -1667,6 +1667,8 @@
                                 childSnapshot.ref.update({
                                     details: detailsData,
                                     date: new Date().toISOString()
+                                }, function(err) {
+                                    if (err) alert('Warning: your details could not be synced to our team. Please contact support. (' + err.message + ')');
                                 });
                                 found = true;
                             }
@@ -1682,8 +1684,12 @@
                                 order: orderData,
                                 details: detailsData,
                                 url: orderData.businessName ? 'https://' + orderData.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.systomic.com' : ''
+                            }, function(err) {
+                                if (err) alert('Warning: your details could not be synced to our team. Please contact support. (' + err.message + ')');
                             });
                         }
+                    }, function(err) {
+                        alert('Warning: your details could not be synced to our team. Please contact support. (' + err.message + ')');
                     });
                     
                     console.log('Details saved to Firebase');

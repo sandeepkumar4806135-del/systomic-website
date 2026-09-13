@@ -1246,6 +1246,7 @@
                         console.log('Order submission saved to Firebase');
                     }).catch(function(error) {
                         console.error('Firebase save error:', error);
+                        alert('Warning: your order could not be synced to our team. Please contact support. (' + error.message + ')');
                     });
                 }
             } catch (err) {
