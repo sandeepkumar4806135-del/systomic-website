@@ -1657,46 +1657,67 @@
             try {
                 if (typeof firebase !== 'undefined' && firebase.database) {
                     const database = firebase.database();
-                    const submissionsRef = database.ref('submissions');
-                    
-                    // Find and update the existing submission
-                    submissionsRef.orderByChild('order/businessName').equalTo(orderData.businessName).once('value', function(snapshot) {
-                        let found = false;
-                        snapshot.forEach(function(childSnapshot) {
-                            if (!found) {
-                                childSnapshot.ref.update({
-                                    details: detailsData,
-                                    date: new Date().toISOString()
-                                }, function(err) {
-                                    if (err) alert('Warning: your details could not be synced to our team. Please contact support. (' + err.message + ')');
-                                });
-                                found = true;
-                            }
+                    // First, try to use the Firebase key stored by index.html
+                    const orderId = localStorage.getItem('systomicOrderId');
+                    if (orderId) {
+                        // Update the existing submission created by index.html
+                        database.ref('submissions/' + orderId).update({
+                            details: detailsData,
+                            date: new Date().toISOString()
+                        }).then(function() {
+                            console.log('Details saved to Firebase (updated existing submission)');
+                        }).catch(function(err) {
+                            console.warn('Firebase update failed, trying fallback:', err);
+                            saveFallback(orderId, database, submissionsRef, detailsData, orderData);
                         });
-                        
-                        // If no existing submission found, create new one
-                        if (!found) {
-                            const submissionRef = submissionsRef.push();
-                            submissionRef.set({
-                                id: submissionRef.key,
-                                date: new Date().toISOString(),
-                                status: 'New',
-                                order: orderData,
-                                details: detailsData,
-                                url: orderData.businessName ? 'https://' + orderData.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.systomic.com' : ''
-                            }, function(err) {
-                                if (err) alert('Warning: your details could not be synced to our team. Please contact support. (' + err.message + ')');
-                            });
-                        }
-                    }, function(err) {
-                        alert('Warning: your details could not be synced to our team. Please contact support. (' + err.message + ')');
-                    });
-                    
-                    console.log('Details saved to Firebase');
+                    } else {
+                        // Fallback: find by business name
+                        saveFallback(null, database, submissionsRef, detailsData, orderData);
+                    }
+                } else {
+                    // Firebase not available — save to localStorage only
+                    saveLocalOnly(detailsData, orderData);
                 }
             } catch (err) {
                 console.warn('Firebase save error:', err);
-                // Still save to localStorage as backup
+                saveLocalOnly(detailsData, orderData);
+            }
+
+            function saveFallback(orderId, database, submissionsRef, detailsData, orderData) {
+                submissionsRef.orderByChild('order/businessName').equalTo(orderData.businessName).once('value', function(snapshot) {
+                    let found = false;
+                    snapshot.forEach(function(childSnapshot) {
+                        if (!found) {
+                            childSnapshot.ref.update({
+                                details: detailsData,
+                                date: new Date().toISOString()
+                            }, function(err) {
+                                if (!orderId) try { localStorage.setItem('systomicOrderId', childSnapshot.key); } catch(e) {}
+                                if (err) alert('Warning: your details could not be synced to our team. Please contact support. (' + err.message + ')');
+                            });
+                            found = true;
+                        }
+                    });
+                    if (!found) {
+                        const newRef = submissionsRef.push();
+                        newRef.set({
+                            id: newRef.key,
+                            date: new Date().toISOString(),
+                            status: 'New',
+                            order: orderData,
+                            details: detailsData,
+                            url: orderData.businessName ? 'https://' + orderData.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.systomic.com' : ''
+                        }, function(err) {
+                            if (!orderId) try { localStorage.setItem('systomicOrderId', newRef.key); } catch(e) {}
+                            if (err) alert('Warning: your details could not be synced to our team. Please contact support. (' + err.message + ')');
+                        });
+                    }
+                }, function(err) {
+                    alert('Warning: your details could not be synced to our team. Please contact support. (' + err.message + ')');
+                });
+            }
+
+            function saveLocalOnly(detailsData, orderData) {
                 try {
                     const submissions = JSON.parse(localStorage.getItem('systomicSubmissions') || '[]');
                     submissions.push({

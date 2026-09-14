@@ -1244,6 +1244,8 @@
                         url: formData.businessName ? 'https://' + formData.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.systomic.com' : ''
                     }).then(function() {
                         console.log('Order submission saved to Firebase');
+                        // Pass the Firebase key to details.html so it can update the same submission
+                        try { localStorage.setItem('systomicOrderId', submissionRef.key); } catch(e) {}
                     }).catch(function(error) {
                         console.error('Firebase save error:', error);
                         alert('Warning: your order could not be synced to our team. Please contact support. (' + error.message + ')');

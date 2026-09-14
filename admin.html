@@ -788,6 +788,9 @@
         const ADMIN_EMAIL = 'ram@gmail.com';
         const ADMIN_PASSWORD = 'ram129';
 
+        // Global submissions array (declared first so all functions can use it)
+        let allSubmissions = [];
+
         // Check if already logged in
         if (localStorage.getItem('systomicAdminLoggedIn') === 'true') {
             showDashboard();
@@ -950,17 +953,25 @@ function logout() {
 
 // View switching
 function showView(view) {
-    document.getElementById('viewClients').style.display = view === 'clients' ? 'block' : 'none';
-    document.getElementById('viewDetail').classList.toggle('show', view === 'detail');
+    var viewClients = document.getElementById('viewClients');
+    var viewDetail = document.getElementById('viewDetail');
+
+    if (view === 'clients') {
+        if (viewClients) viewClients.style.display = 'block';
+        if (viewDetail) viewDetail.classList.remove('show');
+    } else if (view === 'detail') {
+        if (viewClients) viewClients.style.display = 'none';
+        if (viewDetail) {
+            viewDetail.classList.add('show');
+        }
+    }
     
-    document.querySelectorAll('.nav-item').forEach(item => {
+    document.querySelectorAll('.nav-item').forEach(function(item) {
         item.classList.remove('active');
     });
-    document.getElementById('navClients').classList.add('active');
-        }
-
-        // Global submissions array
-        let allSubmissions = [];
+    var navClients = document.getElementById('navClients');
+    if (navClients) navClients.classList.add('active');
+}
 
         // Get status label
         function getStatusLabel(status) {
@@ -1033,7 +1044,7 @@ clientsList.innerHTML = submissions.map(submission => {
                 const websiteLevel = submission.order && submission.order.websiteLevelLabel ? submission.order.websiteLevelLabel : 'Unknown';
                 const dateStr = submission.date ? new Date(submission.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
                 return `
-                    <div class="client-card" onclick="showClientDetail('${key}')">
+                    <div class="client-card" data-id="${key}">
                         <div class="client-info">
                             <div class="client-avatar">${initial}</div>
                             <div>
@@ -1043,7 +1054,7 @@ clientsList.innerHTML = submissions.map(submission => {
                         </div>
                         <div style="display:flex;align-items:center;gap:10px">
                             <span class="status-badge ${statusClass}">${status}</span>
-                            <select class="status-select" onchange="updateStatus('${key}', this.value, event)">
+                            <select class="status-select" data-key="${key}">
                                 <option value="New" ${status === 'New' ? 'selected' : ''}>New</option>
                                 <option value="In Review" ${status === 'In Review' ? 'selected' : ''}>In Review</option>
                                 <option value="Approved" ${status === 'Approved' ? 'selected' : ''}>Approved</option>
@@ -1052,33 +1063,33 @@ clientsList.innerHTML = submissions.map(submission => {
                     </div>
                 `;
             }).join('');
-            clientsList.innerHTML = submissions.map(submission => {
-                const initial = submission.order && submission.order.businessName ? submission.order.businessName.charAt(0).toUpperCase() : '?';
-                const status = getStatusLabel(submission.status);
-                const statusClass = getStatusClass(submission.status);
-                return `
-                    <div class="client-card" onclick="showClientDetail(${submission.id})">
-                        <div class="client-info">
-                            <div class="client-avatar">${initial}</div>
-                            <div>
-                                <div class="client-name">${submission.order.businessName}</div>
-                                <div class="client-meta">${submission.order.businessTypeLabel} • ${submission.order.websiteLevelLabel} • ${submission.date}</div>
-                            </div>
-                        </div>
-                        <div class="client-card-header" onclick="event.stopPropagation()">
-                            <div class="status-dropdown">
-                                <span class="status-badge ${statusClass}" onclick="toggleStatusMenu(${submission.id}, event)">${status} ▾</span>
-                                <div class="status-dropdown-menu" id="statusMenu-${submission.id}">
-                                    <div class="status-option dot-new ${status === 'New' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'New', event)">New</div>
-                                    <div class="status-option dot-review ${status === 'In Review' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'In Review', event)">In Review</div>
-                                    <div class="status-option dot-approved ${status === 'Approved' ? 'active' : ''}" onclick="updateStatus(${submission.id}, 'Approved', event)">Approved</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
         }
+
+        // Delegated event handling for client cards (works even if inline
+        // onclick handlers are blocked, e.g. by a CSP header or extensions)
+        (function setupClientsListDelegation() {
+            const clientsList = document.getElementById('clientsList');
+            if (!clientsList) return;
+
+            // Open client detail when a card is clicked (ignore clicks on the status select)
+            clientsList.addEventListener('click', function(e) {
+                if (e.target.closest('select, option, .status-select')) return;
+                const card = e.target.closest('.client-card');
+                if (card && card.dataset.id) {
+                    showClientDetail(card.dataset.id);
+                }
+            });
+
+            // Update status when the dropdown changes
+            clientsList.addEventListener('change', function(e) {
+                const sel = e.target.closest('select.status-select');
+                if (!sel) return;
+                const id = sel.getAttribute('data-key') || (sel.closest('.client-card') || {}).dataset?.id;
+                if (id) {
+                    updateStatus(id, sel.value, e);
+                }
+            });
+        })();
 
         // Toggle status dropdown menu
         function toggleStatusMenu(id, event) {
@@ -1092,7 +1103,7 @@ clientsList.innerHTML = submissions.map(submission => {
 
         // Update client status
         function updateStatus(id, newStatus, event) {
-            event.stopPropagation();
+            if (event && event.stopPropagation) event.stopPropagation();
             
             // Find submission in allSubmissions array
             const submission = allSubmissions.find(s => s.id === id || s.firebaseKey === id);
@@ -1126,19 +1137,25 @@ clientsList.innerHTML = submissions.map(submission => {
         });
 
         // Show client detail
-        function showClientDetail(id) {
-            const submission = allSubmissions.find(s => s.id === id || s.firebaseKey === id);
+function showClientDetail(id) {
+    const submission = allSubmissions.find(s => String(s.id) === String(id) || String(s.firebaseKey) === String(id));
+    if (!submission) {
+        console.warn('showClientDetail: no submission for id', id);
+        alert('Client not found');
+        return;
+    }
 
-            if (!submission) {
-                alert('Client not found');
-                return;
-            }
-
-            const { order, details, url, date } = submission;
+            const order = submission.order || {};
+            const details = submission.details || {};
+            const url = submission.url || '';
+            const detailId = submission.firebaseKey || submission.id;
+            const clientKey = detailId;
+            const date = submission.date ? new Date(submission.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
             const statusLabel = getStatusLabel(submission.status);
             const statusClass = getStatusClass(submission.status);
 
-            const socialMediaHtml = Object.entries(details.socialMedia || {}).map(([platform, link]) => `
+            const socialMediaData = (details && details.socialMedia) || {};
+            const socialMediaHtml = Object.entries(socialMediaData).map(([platform, link]) => `
                 <div class="detail-item">
                     <span class="detail-label">${platform}</span>
                     <span class="detail-value">${link || 'Not provided'}</span>
@@ -1152,11 +1169,11 @@ clientsList.innerHTML = submissions.map(submission => {
                         <span class="badge badge-purple">${order.businessTypeLabel}</span>
                         <span class="badge badge-green">${order.websiteLevelLabel}</span>
                         <span class="badge badge-yellow">Submitted ${date}</span>
-                        <span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('${id}', event)">${statusLabel} ▾
-                            <div class="status-dropdown-menu" id="statusMenu-${id}">
-                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus('${id}', 'New', event)">New</div>
-                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus('${id}', 'In Review', event)">In Review</div>
-                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus('${id}', 'Approved', event)">Approved</div>
+                        <span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('${clientKey}', event)">${statusLabel} ▾
+                            <div class="status-dropdown-menu" id="statusMenu-${clientKey}">
+                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus('${clientKey}', 'New', event)">New</div>
+                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus('${clientKey}', 'In Review', event)">In Review</div>
+                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus('${clientKey}', 'Approved', event)">Approved</div>
                             </div>
                         </span>
                     </div>
