@@ -1,0 +1,41 @@
+rules_version = '2';
+
+// Firebase Storage rules for the Systomic website.
+//
+// WHY THIS FILE EXISTS:
+// The /index.html order form lets a visitor upload a logo, up to 30 photos and
+// up to 3 videos BEFORE any account is created, so these files are written
+// unauthenticated. The default rules created by the Firebase Console require
+// `request.auth != null`, which makes every upload fail with
+// "storage/unauthorized" and leaves /admin with nothing to view or download.
+//
+// APPLY THESE RULES:
+//   Option A (no tooling) - Firebase Console -> Build -> Storage -> Rules,
+//     paste this file, click Publish.
+//   Option B (CLI) - firebase deploy --only storage
+//
+// NOTE: allowing public writes is required by the current (account-less) order
+// flow. If you later add Firebase Auth to the order form, tighten the write
+// rule to `if request.auth != null`.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Files uploaded from the /index.html "Business Assets" step (step 4)
+    match /client-assets/{allPaths=**} {
+      // Anyone can view the files (the admin dashboard shows previews and
+      // download links, and the links are unguessable Storage download URLs).
+      allow read: if true;
+
+      // Only images and videos, and only up to 25 MB each.
+      allow write: if request.resource.size < 25 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType.matches('video/.*'));
+    }
+
+    // Everything else stays private.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

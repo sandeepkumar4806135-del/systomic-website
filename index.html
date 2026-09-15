@@ -9,6 +9,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -726,7 +727,7 @@
 
                     <div class="form-group">
                         <label for="logo">Business Logo <span style="color: #8892b0; font-weight: 400;">(Optional)</span></label>
-                        <div class="file-upload" onclick="document.getElementById('logo').click()">
+                        <div class="file-upload" data-file-input="logo">
                             <div class="file-upload-icon">📁</div>
                             <div class="file-upload-text">
                                 <strong>Click to upload</strong> or drag and drop<br>
@@ -751,7 +752,7 @@
 
                     <div class="form-group">
                         <label for="photos">Business Photos <span style="color: #8892b0; font-weight: 400;">(Optional - Max 30)</span></label>
-                        <div class="file-upload" onclick="document.getElementById('photos').click()">
+                        <div class="file-upload" data-file-input="photos">
                             <div class="file-upload-icon">🖼️</div>
                             <div class="file-upload-text">
                                 <strong>Click to upload</strong> or drag and drop<br>
@@ -764,7 +765,7 @@
 
                     <div class="form-group">
                         <label for="videos">Business Videos <span style="color: #8892b0; font-weight: 400;">(Optional - Max 3)</span></label>
-                        <div class="file-upload" onclick="document.getElementById('videos').click()">
+                        <div class="file-upload" data-file-input="videos">
                             <div class="file-upload-icon">🎬</div>
                             <div class="file-upload-text">
                                 <strong>Click to upload</strong> or drag and drop<br>
@@ -797,6 +798,7 @@
         let selectedLevel = null;
         let selectedColor = null;
         let selectedTheme = null;
+        let selectedThemeColors = null;
         let uploadedPhotos = [];
         let uploadedVideos = [];
         let logoFile = null;
@@ -996,6 +998,7 @@
                     // Add selected
                     this.classList.add('selected');
                     selectedTheme = theme.name;
+                    selectedThemeColors = theme.colors.slice();
                 });
 
                 themeGrid.appendChild(card);
@@ -1035,6 +1038,17 @@
             }
             
             document.getElementById('videoCount').textContent = `${uploadedVideos.length} video(s) selected`;
+        });
+
+        // Open the file picker from the styled upload box.
+        // Uses addEventListener (not an inline onclick attribute) so it still works
+        // when inline handlers are blocked by a Content-Security-Policy.
+        document.querySelectorAll('[data-file-input]').forEach(function(box) {
+            box.addEventListener('click', function(e) {
+                if (e.target && e.target.id && e.target.type === 'file') return; // direct click on the input
+                const input = document.getElementById(box.dataset.fileInput);
+                if (input) input.click();
+            });
         });
 
         // Navigation
@@ -1159,7 +1173,98 @@
             }
         }, { passive: true });
 
+        // ===== Firebase Storage asset upload helpers =====
+        // The client's logo/photos/videos were previously only counted, never
+        // uploaded, so the admin had nothing to view or download. These helpers
+        // push every selected file to Firebase Storage and return download URLs.
+        let assetProgress = { done: 0, total: 0 };
+
+        function uploadSingleFile(file, folder) {
+            return new Promise(function(resolve) {
+                try {
+                    if (typeof firebase === 'undefined' || !firebase.storage) {
+                        console.warn('Firebase Storage unavailable - skipping ' + file.name);
+                        resolve(null);
+                        return;
+                    }
+                    const safeName = String(file.name || 'file').replace(/[^\w.\-]+/g, '_');
+                    const path = 'client-assets/' + folder + '/' + Date.now() + '-' +
+                                 Math.random().toString(36).slice(2, 8) + '-' + safeName;
+                    const storageRef = firebase.storage().ref(path);
+                    const uploadTask = storageRef.put(file);
+
+                    uploadTask.on('state_changed', null, function(err) {
+                        console.warn('Upload failed for ' + file.name + ': ' + (err && err.message));
+                        assetProgress.done++;
+                        if (typeof window.updateAssetProgress === 'function') window.updateAssetProgress(assetProgress);
+                        resolve(null);
+                    }, function() {
+                        storageRef.getDownloadURL().then(function(url) {
+                            assetProgress.done++;
+                            if (typeof window.updateAssetProgress === 'function') window.updateAssetProgress(assetProgress);
+                            resolve({
+                                name: file.name,
+                                url: url,
+                                path: path,
+                                size: file.size || 0,
+                                type: file.type || ''
+                            });
+                        }).catch(function(err) {
+                            console.warn('getDownloadURL failed for ' + file.name + ': ' + (err && err.message));
+                            assetProgress.done++;
+                            resolve(null);
+                        });
+                    });
+                } catch (err) {
+                    console.warn('Upload exception for ' + (file && file.name) + ':', err);
+                    assetProgress.done++;
+                    resolve(null);
+                }
+            });
+        }
+
+        // Uploads everything the client attached. Always resolves (never rejects)
+        // so a failed upload can never block the order from being submitted.
+        function uploadAllAssets() {
+            const jobs = [];
+            const result = { logo: null, photos: [], videos: [] };
+
+            assetProgress = {
+                done: 0,
+                total: (logoFile ? 1 : 0) + uploadedPhotos.length + uploadedVideos.length
+            };
+
+            if (logoFile) {
+                jobs.push(uploadSingleFile(logoFile, 'logo').then(function(r) { result.logo = r; }));
+            }
+            uploadedPhotos.forEach(function(f) {
+                jobs.push(uploadSingleFile(f, 'photos').then(function(r) { if (r) result.photos.push(r); }));
+            });
+            uploadedVideos.forEach(function(f) {
+                jobs.push(uploadSingleFile(f, 'videos').then(function(r) { if (r) result.videos.push(r); }));
+            });
+
+            if (jobs.length === 0) {
+                return Promise.resolve(result);
+            }
+
+            // Safety net: never let the user hang on "Uploading..." forever.
+            const allDone = Promise.all(jobs).then(function() { return result; });
+            const timeout = new Promise(function(resolve) {
+                setTimeout(function() { resolve(result); }, 180000);
+            });
+            return Promise.race([allDone, timeout]);
+        }
+
         function submitOrder() {
+            // Guard against double submission: a click on the submit button fires
+            // both the button's click listener AND the form's submit event, which
+            // would otherwise create two orders and upload every file twice.
+            if (window.__systomicSubmitting) {
+                console.log('Order already submitting - ignoring duplicate trigger');
+                return false;
+            }
+
             // Validation
             const fields = ['businessName', 'phone', 'email', 'address', 'whatsapp', 'adminEmail', 'adminPassword'];
             let isValid = true;
@@ -1195,6 +1300,9 @@
                 return false;
             }
 
+            // Validation passed - lock the form so it can only be submitted once
+            window.__systomicSubmitting = true;
+
             // Save form data to localStorage including business assets
             const formData = {
                 businessType: selectedBusiness,
@@ -1210,6 +1318,7 @@
                 adminPassword: document.getElementById('adminPassword').value,
                 brandColor: selectedColor,
                 brandTheme: selectedTheme,
+                brandPalette: selectedThemeColors,
                 logoName: logoFile ? logoFile.name : null,
                 photosCount: uploadedPhotos.length,
                 videosCount: uploadedVideos.length
@@ -1224,41 +1333,83 @@
 
             // Show loading indicator for mobile users
             const submitBtn = document.querySelector('#orderForm button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.textContent = 'Submitting...';
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.7';
-            }
+            const totalFiles = (logoFile ? 1 : 0) + uploadedPhotos.length + uploadedVideos.length;
 
-            // Save to Firebase Realtime Database
-            try {
-                if (typeof firebase !== 'undefined' && firebase.database) {
-                    const database = firebase.database();
-                    const submissionRef = database.ref('submissions').push();
-                    submissionRef.set({
-                        id: submissionRef.key,
-                        date: new Date().toISOString(),
-                        status: 'New',
-                        order: formData,
-                        details: null,
-                        url: formData.businessName ? 'https://' + formData.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.systomic.com' : ''
-                    }).then(function() {
-                        console.log('Order submission saved to Firebase');
-                        // Pass the Firebase key to details.html so it can update the same submission
-                        try { localStorage.setItem('systomicOrderId', submissionRef.key); } catch(e) {}
-                    }).catch(function(error) {
-                        console.error('Firebase save error:', error);
-                        alert('Warning: your order could not be synced to our team. Please contact support. (' + error.message + ')');
-                    });
+            function setSubmitState(text) {
+                if (submitBtn) {
+                    submitBtn.textContent = text;
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.7';
                 }
-            } catch (err) {
-                console.warn('Firebase not available:', err);
             }
 
-            // Redirect to details page (longer delay for mobile compatibility)
-            setTimeout(function() {
+            // Keep the user informed while files are uploading
+            window.updateAssetProgress = function(p) {
+                if (p && p.total > 0) {
+                    setSubmitState('Uploading files (' + p.done + '/' + p.total + ')...');
+                }
+            };
+
+            setSubmitState(totalFiles > 0 ? 'Uploading files (0/' + totalFiles + ')...' : 'Submitting...');
+
+            // Upload the client's logo, photos and videos so our team can actually
+            // view and download them, then save everything to Firebase.
+            uploadAllAssets().then(function(assets) {
+                formData.logoUrl = assets.logo ? assets.logo.url : null;
+                formData.logoFileName = assets.logo ? assets.logo.name : (logoFile ? logoFile.name : null);
+                formData.logoFileType = assets.logo ? assets.logo.type : null;
+                formData.photoUrls = assets.photos;
+                formData.videoUrls = assets.videos;
+                formData.photosCount = assets.photos.length || uploadedPhotos.length;
+                formData.videosCount = assets.videos.length || uploadedVideos.length;
+
+                const uploadedCount = (assets.logo ? 1 : 0) + assets.photos.length + assets.videos.length;
+                if (totalFiles > 0 && uploadedCount < totalFiles) {
+                    console.warn('Some assets could not be uploaded to Firebase Storage (' +
+                                 uploadedCount + '/' + totalFiles + '). The order was still submitted.');
+                }
+
+                // Re-save localStorage now that the asset URLs are included
+                try {
+                    localStorage.setItem('systomicOrder', JSON.stringify(formData));
+                } catch (err) {
+                    console.warn('LocalStorage not available');
+                }
+
+                setSubmitState('Submitting...');
+
+                // Save to Firebase Realtime Database
+                try {
+                    if (typeof firebase !== 'undefined' && firebase.database) {
+                        const database = firebase.database();
+                        const submissionRef = database.ref('submissions').push();
+                        submissionRef.set({
+                            id: submissionRef.key,
+                            date: new Date().toISOString(),
+                            status: 'New',
+                            order: formData,
+                            details: null,
+                            url: formData.businessName ? 'https://' + formData.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.systomic.com' : ''
+                        }).then(function() {
+                            console.log('Order submission saved to Firebase');
+                            // Pass the Firebase key to details.html so it can update the same submission
+                            try { localStorage.setItem('systomicOrderId', submissionRef.key); } catch(e) {}
+                            setSubmitState('Redirecting...');
+                            window.location.href = 'details.html';
+                        }).catch(function(error) {
+                            console.error('Firebase save error:', error);
+                            alert('Warning: your order could not be synced to our team. Please contact support. (' + error.message + ')');
+                            window.location.href = 'details.html';
+                        });
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Firebase not available:', err);
+                }
+
+                // Firebase unavailable - continue to the details page anyway
                 window.location.href = 'details.html';
-            }, 500);
+            });
 
             return false; // Prevent form submission on all browsers
         }

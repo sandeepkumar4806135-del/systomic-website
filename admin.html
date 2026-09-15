@@ -506,6 +506,107 @@
             display: block;
         }
 
+        /* Brand colour chips */
+        .color-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.35);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #ccd6f6;
+            font-family: monospace;
+        }
+
+        .color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            flex-shrink: 0;
+        }
+
+        .palette-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .palette-swatch {
+            width: 44px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        /* Uploaded files gallery */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        .media-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .media-item img,
+        .media-item video {
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            display: block;
+            background: #000;
+        }
+
+        .media-meta {
+            padding: 8px 10px 0;
+            font-size: 0.72rem;
+            color: #8892b0;
+            word-break: break-all;
+        }
+
+        .media-actions {
+            display: flex;
+            gap: 8px;
+            padding: 8px 10px 10px;
+            flex-wrap: wrap;
+        }
+
+        .media-btn {
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.45);
+            color: #ccd6f6;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: inherit;
+            display: inline-block;
+        }
+
+        .media-btn:hover {
+            background: rgba(102, 126, 234, 0.4);
+        }
+
+        .asset-note {
+            font-size: 0.82rem;
+            color: #f0b429;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+
         .back-btn {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -749,12 +850,12 @@
         <div class="sidebar">
             <div class="sidebar-logo">SYSTOMIC</div>
             <div class="sidebar-nav">
-                <div class="nav-item active" id="navClients" onclick="showView('clients')">
+                <div class="nav-item active" id="navClients" data-view="clients">
                     <span class="icon">👥</span>
                     <span>Clients</span>
                 </div>
             </div>
-            <div class="logout-btn" onclick="logout()">
+            <div class="logout-btn" id="logoutBtn">
                 <span class="icon">🚪</span>
                 <span>Logout</span>
             </div>
@@ -777,7 +878,7 @@
 
             <!-- Client Detail View -->
             <div class="detail-view" id="viewDetail">
-                <button class="back-btn" onclick="showView('clients')">← Back to Clients</button>
+                <button class="back-btn" data-view="clients">← Back to Clients</button>
                 <div id="clientDetail"></div>
             </div>
         </div>
@@ -1043,13 +1144,23 @@ clientsList.innerHTML = submissions.map(submission => {
                 const businessType = submission.order && submission.order.businessTypeLabel ? submission.order.businessTypeLabel : 'Unknown';
                 const websiteLevel = submission.order && submission.order.websiteLevelLabel ? submission.order.websiteLevelLabel : 'Unknown';
                 const dateStr = submission.date ? new Date(submission.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+                const cardOrder = submission.order || {};
+                const cardPhotos = toArray(cardOrder.photoUrls).length;
+                const cardVideos = toArray(cardOrder.videoUrls).length;
+                const assetBits = [];
+                if (cardOrder.brandTheme) assetBits.push('&#127912; ' + cardOrder.brandTheme);
+                if (cardPhotos) assetBits.push('&#128444; ' + cardPhotos + ' photos');
+                else if (cardOrder.photosCount > 0) assetBits.push('&#128444; ' + cardOrder.photosCount + ' photos');
+                if (cardVideos) assetBits.push('&#127916; ' + cardVideos + ' videos');
+                else if (cardOrder.videosCount > 0) assetBits.push('&#127916; ' + cardOrder.videosCount + ' videos');
                 return `
                     <div class="client-card" data-id="${key}">
                         <div class="client-info">
-                            <div class="client-avatar">${initial}</div>
+                            <div class="client-avatar"${cardOrder.brandColor ? ` style="background: ${cardOrder.brandColor}; color: #0a0e27;"` : ''}>${initial}</div>
                             <div>
                                 <div class="client-name">${businessName}</div>
                                 <div class="client-meta">${businessType} • ${websiteLevel} • ${dateStr}</div>
+                                ${assetBits.length ? `<div class="client-meta" style="margin-top: 4px;">${assetBits.join(' • ')}</div>` : ''}
                             </div>
                         </div>
                         <div style="display:flex;align-items:center;gap:10px">
@@ -1093,7 +1204,7 @@ clientsList.innerHTML = submissions.map(submission => {
 
         // Toggle status dropdown menu
         function toggleStatusMenu(id, event) {
-            event.stopPropagation();
+            if (event && event.stopPropagation) event.stopPropagation();
             // Close all other menus
             document.querySelectorAll('.status-dropdown-menu').forEach(menu => menu.classList.remove('show'));
             // Toggle this menu
@@ -1136,20 +1247,255 @@ clientsList.innerHTML = submissions.map(submission => {
             }
         });
 
-        // Show client detail
-function showClientDetail(id) {
-    const submission = allSubmissions.find(s => String(s.id) === String(id) || String(s.firebaseKey) === String(id));
-    if (!submission) {
-        console.warn('showClientDetail: no submission for id', id);
-        alert('Client not found');
-        return;
-    }
+        // ===== Brand / asset helpers =====
+        // Firebase Realtime Database turns arrays into objects keyed by index,
+        // so normalise both shapes back into a real array.
+        function toArray(value) {
+            if (!value) return [];
+            if (Array.isArray(value)) return value;
+            if (typeof value === 'object') {
+                return Object.keys(value)
+                    .sort(function(a, b) { return Number(a) - Number(b); })
+                    .map(function(k) { return value[k]; })
+                    .filter(function(v) { return v !== null && v !== undefined; });
+            }
+            return [];
+        }
 
+        function escapeHtml(value) {
+            return String(value === null || value === undefined ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatBytes(bytes) {
+            var n = Number(bytes) || 0;
+            if (n <= 0) return '';
+            if (n < 1024) return n + ' B';
+            if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+            return (n / 1048576).toFixed(1) + ' MB';
+        }
+
+        // Render any scalar value, showing a friendly fallback instead of the
+        // string "undefined" for fields the client never filled in.
+        function text(value, fallback) {
+            if (value === null || value === undefined || value === '') return fallback || 'Not provided';
+            if (typeof value === 'object') return fallback || 'Not provided';
+            return escapeHtml(value);
+        }
+
+        // Force a real download of a (possibly cross-origin) Firebase Storage
+        // file; falls back to opening it in a new tab if CORS blocks the fetch.
+        function downloadAsset(url, filename) {
+            if (!url) return;
+            var fallback = function() { window.open(url, '_blank', 'noopener'); };
+            try {
+                fetch(url, { mode: 'cors' })
+                    .then(function(res) { return res.blob(); })
+                    .then(function(blob) {
+                        var objectUrl = URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = objectUrl;
+                        a.download = filename || 'download';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        setTimeout(function() { URL.revokeObjectURL(objectUrl); }, 10000);
+                    })
+                    .catch(fallback);
+            } catch (err) {
+                fallback();
+            }
+        }
+
+        // Staggered "download all" for a client's photos or videos
+        function downloadAllAssets(kind) {
+            var order = currentDetailOrder || {};
+            var items = kind === 'videos' ? toArray(order.videoUrls) : toArray(order.photoUrls);
+            if (!items.length) return;
+            items.forEach(function(item, i) {
+                var url = (item && item.url) || item;
+                var name = (item && item.name) || (kind + '-' + (i + 1));
+                setTimeout(function() { downloadAsset(url, name); }, i * 700);
+            });
+        }
+
+        // The brand colour + theme palette the client picked in step 4
+        function renderBrandBlock(order) {
+            var palette = toArray(order.brandPalette);
+            var swatches = '';
+            palette.forEach(function(color) {
+                swatches += '<div class="palette-swatch" style="background: ' + escapeHtml(color) +
+                            '" title="' + escapeHtml(color) + '"></div>';
+            });
+
+            return '<div class="detail-section">' +
+                '<div class="detail-section-title">Brand Colour &amp; Theme</div>' +
+                '<div class="detail-item">' +
+                    '<span class="detail-label">Primary Colour</span>' +
+                    '<span class="detail-value">' +
+                        (order.brandColor
+                            ? '<span class="color-chip"><span class="color-dot" style="background: ' +
+                              escapeHtml(order.brandColor) + '"></span>' + escapeHtml(order.brandColor) + '</span>'
+                            : 'Not selected') +
+                    '</span>' +
+                '</div>' +
+                '<div class="detail-item">' +
+                    '<span class="detail-label">Theme Name</span>' +
+                    '<span class="detail-value">' + (order.brandTheme ? escapeHtml(order.brandTheme) : 'Not selected') + '</span>' +
+                '</div>' +
+                '<div class="detail-item" style="align-items: flex-start;">' +
+                    '<span class="detail-label">Theme Palette</span>' +
+                    '<span class="detail-value">' +
+                        (palette.length ? '<div class="palette-row">' + swatches + '</div>' : 'Not available') +
+                    '</span>' +
+                '</div>' +
+            '</div>';
+        }
+
+        // The logo, photos and videos the client uploaded in step 4
+        function renderAssetsBlock(order) {
+            var photos = toArray(order.photoUrls);
+            var videos = toArray(order.videoUrls);
+            var logoUrl = order.logoUrl || '';
+            var logoName = order.logoFileName || order.logoName || 'logo';
+            var claimedPhotos = Number(order.photosCount) || 0;
+            var claimedVideos = Number(order.videosCount) || 0;
+
+            function mediaCard(url, name, isVideo, size) {
+                // data-* attributes + delegated listener (not inline onclick) so
+                // downloads keep working even when inline handlers are blocked
+                var preview = isVideo
+                    ? '<video src="' + escapeHtml(url) + '" controls preload="metadata"></video>'
+                    : '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(name) + '" loading="lazy">';
+                return '<div class="media-item">' + preview +
+                    '<div class="media-meta">' + escapeHtml(name) + (size ? ' &bull; ' + formatBytes(size) : '') + '</div>' +
+                    '<div class="media-actions">' +
+                        '<button type="button" class="media-btn" data-download-url="' + escapeHtml(url) +
+                        '" data-download-name="' + escapeHtml(name) + '">&#11015; Download</button>' +
+                        '<a class="media-btn" href="' + escapeHtml(url) + '" target="_blank" rel="noopener">Open</a>' +
+                    '</div>' +
+                '</div>';
+            }
+
+            var photoCards = photos.map(function(p, i) {
+                return mediaCard((p && p.url) || p, (p && p.name) || ('photo-' + (i + 1)), false, p && p.size);
+            }).join('');
+
+            var videoCards = videos.map(function(v, i) {
+                return mediaCard((v && v.url) || v, (v && v.name) || ('video-' + (i + 1)), true, v && v.size);
+            }).join('');
+
+            var logoHtml;
+            if (logoUrl) {
+                logoHtml = '<div class="media-grid" style="max-width: 220px;">' +
+                           mediaCard(logoUrl, logoName, false, 0) + '</div>';
+            } else if (order.logoName) {
+                logoHtml = escapeHtml(order.logoName) +
+                           ' <span class="asset-note" style="display:inline;">(file not uploaded)</span>';
+            } else {
+                logoHtml = 'Not uploaded';
+            }
+
+            var missingNote = '';
+            if (photos.length < claimedPhotos || videos.length < claimedVideos) {
+                missingNote = '<div class="asset-note">&#9888; The client selected ' + claimedPhotos +
+                    ' photo(s) and ' + claimedVideos + ' video(s), but only ' + photos.length +
+                    ' photo(s) and ' + videos.length + ' video(s) are stored. Files from orders submitted before ' +
+                    'upload support was added cannot be recovered &mdash; ask the client to resend them.</div>';
+            }
+
+            var emptyNote = '';
+            if (!logoUrl && !photos.length && !videos.length && !claimedPhotos && !claimedVideos && !order.logoName) {
+                emptyNote = '<div class="asset-note">No files were uploaded with this order.</div>';
+            }
+
+            return '<div class="detail-section">' +
+                '<div class="detail-section-title">Uploaded Files</div>' +
+                '<div class="detail-item" style="align-items: flex-start;">' +
+                    '<span class="detail-label">Business Logo</span>' +
+                    '<span class="detail-value">' + logoHtml + '</span>' +
+                '</div>' +
+                '<div style="margin-top: 20px;">' +
+                    '<div class="detail-section-title" style="font-size: 1rem;">Photos (' + photos.length + ')' +
+                        (photos.length ? ' <button type="button" class="media-btn" data-download-all="photos">&#11015; Download all</button>' : '') +
+                    '</div>' +
+                    (photos.length ? '<div class="media-grid">' + photoCards + '</div>' : '<div class="detail-value">No photos uploaded</div>') +
+                '</div>' +
+                '<div style="margin-top: 20px;">' +
+                    '<div class="detail-section-title" style="font-size: 1rem;">Videos (' + videos.length + ')' +
+                        (videos.length ? ' <button type="button" class="media-btn" data-download-all="videos">&#11015; Download all</button>' : '') +
+                    '</div>' +
+                    (videos.length ? '<div class="media-grid">' + videoCards + '</div>' : '<div class="detail-value">No videos uploaded</div>') +
+                '</div>' +
+                missingNote + emptyNote +
+            '</div>';
+        }
+
+        // Track which client is open so an async refresh only redraws when relevant
+        var currentDetailKey = null;
+        var currentDetailOrder = null;
+
+        // Show client detail. Renders the cached copy instantly, then refreshes
+        // from Firebase so the data filled in on details.html always appears,
+        // even if it was saved after this dashboard was loaded.
+        function showClientDetail(id) {
+            var submission = allSubmissions.find(function(s) {
+                return String(s.id) === String(id) || String(s.firebaseKey) === String(id);
+            });
+
+            if (!submission) {
+                console.warn('showClientDetail: no submission for id', id);
+                alert('Client not found');
+                return;
+            }
+
+            renderClientDetail(submission);
+
+            var key = submission.firebaseKey || submission.id;
+            try {
+                if (key && typeof firebase !== 'undefined' && firebase.database) {
+                    firebase.database().ref('submissions/' + key).once('value').then(function(snap) {
+                        if (!snap || !snap.exists()) return;
+
+                        var fresh = snap.val();
+                        fresh.firebaseKey = snap.key;
+
+                        var idx = allSubmissions.findIndex(function(s) {
+                            return (s.firebaseKey || s.id) === fresh.firebaseKey;
+                        });
+                        if (idx !== -1) {
+                            allSubmissions[idx] = fresh;
+                        } else {
+                            allSubmissions.push(fresh);
+                        }
+
+                        // Only redraw when the user is still viewing this client
+                        if (currentDetailKey === fresh.firebaseKey) {
+                            renderClientDetail(fresh);
+                        }
+                    }).catch(function(err) {
+                        console.warn('Detail refresh failed:', err && err.message);
+                    });
+                }
+            } catch (err) {
+                console.warn('Detail refresh error:', err);
+            }
+        }
+
+        function renderClientDetail(submission) {
             const order = submission.order || {};
             const details = submission.details || {};
             const url = submission.url || '';
             const detailId = submission.firebaseKey || submission.id;
             const clientKey = detailId;
+
+            // Remember what is open so async refreshes know whether to redraw
+            currentDetailKey = detailId;
+            currentDetailOrder = order;
             const date = submission.date ? new Date(submission.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
             const statusLabel = getStatusLabel(submission.status);
             const statusClass = getStatusClass(submission.status);
@@ -1162,27 +1508,29 @@ function showClientDetail(id) {
                 </div>
             `).join('') || '<span class="detail-value">None selected</span>';
 
-            document.getElementById('clientDetail').innerHTML = `
+            let detailHtml;
+            try {
+                detailHtml = `
                 <div class="detail-header">
-                    <h2>${order.businessName}</h2>
+                    <h2>${text(order.businessName, 'Unknown Client')}</h2>
                     <div class="detail-badges">
-                        <span class="badge badge-purple">${order.businessTypeLabel}</span>
-                        <span class="badge badge-green">${order.websiteLevelLabel}</span>
+                        <span class="badge badge-purple">${text(order.businessTypeLabel, 'Business')}</span>
+                        <span class="badge badge-green">${text(order.websiteLevelLabel, 'Website')}</span>
                         <span class="badge badge-yellow">Submitted ${date}</span>
-                        <span class="status-badge ${statusClass} relative" onclick="toggleStatusMenu('${clientKey}', event)">${statusLabel} ▾
+                        <span class="status-badge ${statusClass} relative" data-status-menu="${clientKey}">${statusLabel} ▾
                             <div class="status-dropdown-menu" id="statusMenu-${clientKey}">
-                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" onclick="updateStatus('${clientKey}', 'New', event)">New</div>
-                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" onclick="updateStatus('${clientKey}', 'In Review', event)">In Review</div>
-                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" onclick="updateStatus('${clientKey}', 'Approved', event)">Approved</div>
+                                <div class="status-option dot-new ${statusLabel === 'New' ? 'active' : ''}" data-status-key="${clientKey}" data-status-set="New">New</div>
+                                <div class="status-option dot-review ${statusLabel === 'In Review' ? 'active' : ''}" data-status-key="${clientKey}" data-status-set="In Review">In Review</div>
+                                <div class="status-option dot-approved ${statusLabel === 'Approved' ? 'active' : ''}" data-status-key="${clientKey}" data-status-set="Approved">Approved</div>
                             </div>
                         </span>
                     </div>
                     <div class="tags-list" style="margin-top: 15px;">
                         ${order.brandTheme ? `<span class="tag">🎨 ${order.brandTheme}</span>` : ''}
-                        ${order.brandColor ? `<span class="tag" style="background: ${order.brandColor}; color: white;">Brand Color Selected</span>` : ''}
-                        ${order.logoName ? '<span class="tag">📁 Logo</span>' : ''}
-                        ${order.photosCount > 0 ? `<span class="tag">🖼️ ${order.photosCount} photos</span>` : ''}
-                        ${order.videosCount > 0 ? `<span class="tag">🎬 ${order.videosCount} videos</span>` : ''}
+                        ${order.brandColor ? `<span class="color-chip"><span class="color-dot" style="background: ${order.brandColor}"></span>${order.brandColor}</span>` : ''}
+                        ${order.logoUrl || order.logoName ? '<span class="tag">📁 Logo</span>' : ''}
+                        ${toArray(order.photoUrls).length > 0 ? `<span class="tag">🖼️ ${toArray(order.photoUrls).length} photos</span>` : (order.photosCount > 0 ? `<span class="tag">🖼️ ${order.photosCount} photos (not uploaded)</span>` : '')}
+                        ${toArray(order.videoUrls).length > 0 ? `<span class="tag">🎬 ${toArray(order.videoUrls).length} videos</span>` : (order.videosCount > 0 ? `<span class="tag">🎬 ${order.videosCount} videos (not uploaded)</span>` : '')}
                     </div>
                 </div>
 
@@ -1190,55 +1538,59 @@ function showClientDetail(id) {
                     <div class="detail-section-title">Contact Information</div>
                     <div class="detail-item">
                         <span class="detail-label">Business Name</span>
-                        <span class="detail-value">${order.businessName}</span>
+                        <span class="detail-value">${text(order.businessName)}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Phone</span>
-                        <span class="detail-value">${order.phone}</span>
+                        <span class="detail-value">${text(order.phone)}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Email</span>
-                        <span class="detail-value">${order.email}</span>
+                        <span class="detail-value">${text(order.email)}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Address</span>
-                        <span class="detail-value">${order.address}</span>
+                        <span class="detail-value">${text(order.address)}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">WhatsApp</span>
-                        <span class="detail-value">${order.whatsapp}</span>
+                        <span class="detail-value">${text(order.whatsapp)}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Admin Email</span>
-                        <span class="detail-value">${order.adminEmail}</span>
+                        <span class="detail-value">${text(order.adminEmail)}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Admin Password</span>
-                        <span class="detail-value">${order.adminPassword}</span>
+                        <span class="detail-value">${text(order.adminPassword)}</span>
                     </div>
                 </div>
+
+                ${renderBrandBlock(order)}
+
+                ${renderAssetsBlock(order)}
 
                 <div class="detail-section">
                     <div class="detail-section-title">Website Plan</div>
                     <div class="detail-item">
                         <span class="detail-label">Website Level</span>
-                        <span class="detail-value">${order.websiteLevelLabel}</span>
+                        <span class="detail-value">${text(order.websiteLevelLabel)}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Project Type</span>
-                        <span class="detail-value">${details.projectType || 'Not specified'}</span>
+                        <span class="detail-value">${text(details.projectType, 'Not specified')}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Business Type</span>
-                        <span class="detail-value">${order.businessTypeLabel}</span>
+                        <span class="detail-value">${text(order.businessTypeLabel)}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Year Established</span>
-                        <span class="detail-value">${details.yearEstablished}</span>
+                        <span class="detail-value">${text(details.yearEstablished, 'Not specified')}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Website URL</span>
-                        <span class="detail-value"><a href="${url}" target="_blank" class="url-link">${url}</a></span>
+                        <span class="detail-value">${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="url-link">${escapeHtml(url)}</a>` : 'Not available'}</span>
                     </div>
                 </div>
 
@@ -1246,19 +1598,19 @@ function showClientDetail(id) {
                     <div class="detail-section-title">Business Information</div>
                     <div class="detail-item">
                         <span class="detail-label">Company Description</span>
-                        <span class="detail-value">${details.companyDescription}</span>
+                        <span class="detail-value">${text(details.companyDescription, 'Not provided')}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Top 3 Goals</span>
-                        <span class="detail-value">${details.topGoals}</span>
+                        <span class="detail-value">${text(details.topGoals, 'Not provided')}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Target Audience</span>
-                        <span class="detail-value">${(details.targetAudience || []).join(', ') || 'Not selected'}</span>
+                        <span class="detail-value">${toArray(details.targetAudience).join(', ') || 'Not selected'}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Business Goals</span>
-                        <span class="detail-value">${(details.businessGoals || []).join(', ') || 'Not selected'}</span>
+                        <span class="detail-value">${toArray(details.businessGoals).join(', ') || 'Not selected'}</span>
                     </div>
                 </div>
 
@@ -1266,22 +1618,22 @@ function showClientDetail(id) {
                     <div class="detail-section-title">Competitor Research</div>
                     <div class="detail-item">
                         <span class="detail-label">Websites They Like</span>
-                        <span class="detail-value">${details.competitorLikes}</span>
+                        <span class="detail-value">${text(details.competitorLikes, 'Not provided')}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Features Liked</span>
-                        <span class="detail-value">${details.featuresLiked || 'Not provided'}</span>
+                        <span class="detail-value">${text(details.featuresLiked, 'Not provided')}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Features Disliked</span>
-                        <span class="detail-value">${details.featuresDisliked || 'Not provided'}</span>
+                        <span class="detail-value">${text(details.featuresDisliked, 'Not provided')}</span>
                     </div>
                 </div>
 
                 <div class="detail-section">
                     <div class="detail-section-title">Website Pages</div>
                     <div class="tags-list">
-                        ${(details.websitePages || []).map(page => `<span class="tag">${page}</span>`).join('') || '<span class="tag">None selected</span>'}
+                        ${toArray(details.websitePages).map(page => `<span class="tag">${escapeHtml(page)}</span>`).join('') || '<span class="tag">None selected</span>'}
                     </div>
                     <div style="margin-top: 15px;">
                         <div class="detail-section-title" style="font-size: 1rem;">Social Media</div>
@@ -1292,14 +1644,14 @@ function showClientDetail(id) {
                 <div class="detail-section">
                     <div class="detail-section-title">Website Features</div>
                     <div class="tags-list">
-                        ${(details.websiteFeatures || []).map(feature => `<span class="tag">${feature}</span>`).join('') || '<span class="tag">None selected</span>'}
+                        ${toArray(details.websiteFeatures).map(feature => `<span class="tag">${escapeHtml(feature)}</span>`).join('') || '<span class="tag">None selected</span>'}
                     </div>
                 </div>
 
                 <div class="detail-section">
                     <div class="detail-section-title">Niche-Specific Selections</div>
                     <div class="tags-list">
-                        ${(details.nicheSelections || []).map(item => `<span class="tag">${item}</span>`).join('') || '<span class="tag">None selected</span>'}
+                        ${toArray(details.nicheSelections).map(item => `<span class="tag">${escapeHtml(item)}</span>`).join('') || '<span class="tag">None selected</span>'}
                     </div>
                 </div>
 
@@ -1307,26 +1659,86 @@ function showClientDetail(id) {
                     <div class="detail-section-title">Technical Details</div>
                     <div class="detail-item">
                         <span class="detail-label">Has Domain</span>
-                        <span class="detail-value">${details.hasDomain || 'Not specified'}${details.domainName ? ` (${details.domainName})` : ''}</span>
+                        <span class="detail-value">${text(details.hasDomain, 'Not specified')}${details.domainName ? ` (${escapeHtml(details.domainName)})` : ''}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Has Hosting</span>
-                        <span class="detail-value">${details.hasHosting || 'Not specified'}</span>
+                        <span class="detail-value">${text(details.hasHosting, 'Not specified')}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Existing Website</span>
-                        <span class="detail-value">${details.existingWebsite || 'Not specified'}${details.existingUrl ? ` (${details.existingUrl})` : ''}</span>
+                        <span class="detail-value">${text(details.existingWebsite, 'Not specified')}${details.existingUrl ? ` (${escapeHtml(details.existingUrl)})` : ''}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Platforms Needed</span>
-                        <span class="detail-value">${(details.platforms || []).join(', ') || 'Not specified'}</span>
+                        <span class="detail-value">${toArray(details.platforms).join(', ') || 'Not specified'}</span>
                     </div>
                 </div>
             `;
+            } catch (renderErr) {
+                // Never let a bad field silently blank the whole detail view
+                console.error('renderClientDetail failed:', renderErr);
+                detailHtml = '<div class="asset-note">Could not render this client&rsquo;s details: ' +
+                             escapeHtml(renderErr && renderErr.message ? renderErr.message : String(renderErr)) + '</div>';
+            }
+
+            document.getElementById('clientDetail').innerHTML = detailHtml;
 
             showView('detail');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        // Delegated handling for everything inside the client detail view.
+        // Uses data-* attributes instead of inline onclick so the controls keep
+        // working even when inline handlers are blocked (CSP / extensions).
+        (function setupClientDetailDelegation() {
+            const detailPane = document.getElementById('clientDetail');
+            if (!detailPane) return;
+
+            detailPane.addEventListener('click', function(e) {
+                // Per-file download
+                const dl = e.target.closest('[data-download-url]');
+                if (dl) {
+                    downloadAsset(dl.dataset.downloadUrl, dl.dataset.downloadName);
+                    return;
+                }
+
+                // Download every photo / video for this client
+                const dlAll = e.target.closest('[data-download-all]');
+                if (dlAll) {
+                    downloadAllAssets(dlAll.dataset.downloadAll);
+                    return;
+                }
+
+                // Choose a status from the dropdown
+                const statusOpt = e.target.closest('[data-status-set]');
+                if (statusOpt) {
+                    updateStatus(statusOpt.dataset.statusKey, statusOpt.dataset.statusSet, e);
+                    return;
+                }
+
+                // Toggle the status dropdown
+                const statusMenu = e.target.closest('[data-status-menu]');
+                if (statusMenu) {
+                    toggleStatusMenu(statusMenu.dataset.statusMenu, e);
+                }
+            });
+        })();
+
+        // Static dashboard controls wired with addEventListener instead of inline
+        // onclick attributes so they keep working when inline handlers are blocked
+        (function setupStaticControls() {
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() { logout(); });
+            }
+
+            document.querySelectorAll('[data-view]').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    showView(el.dataset.view);
+                });
+            });
+        })();
     </script>
 </body>
 </html>

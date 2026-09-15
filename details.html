@@ -1243,7 +1243,7 @@
                 </div>
 
                 <div class="button-group">
-                    <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">← Back</button>
+                    <button type="button" class="btn btn-secondary" data-href="index.html">← Back</button>
                     <button type="submit" class="btn btn-primary btn-next" id="detailsSubmitBtn">Submit Your Details →</button>
                 </div>
             </form>
@@ -1254,7 +1254,7 @@
                 <div class="success-title">Details Submitted Successfully!</div>
                 <p class="success-text">Thank you for submitting your website details. Our team will review your information and contact you soon.</p>
 
-                <button class="btn btn-primary" style="margin-bottom: 30px;" onclick="window.location.href='index.html'">🏠 Go to Home</button>
+                <button class="btn btn-primary" style="margin-bottom: 30px;" data-href="index.html">🏠 Go to Home</button>
 
                 <div class="summary-box">
                     <div class="summary-title">Order Summary</div>
@@ -1657,6 +1657,10 @@
             try {
                 if (typeof firebase !== 'undefined' && firebase.database) {
                     const database = firebase.database();
+                    // submissionsRef was previously referenced without ever being
+                    // declared, so the saveFallback path threw a ReferenceError and
+                    // the client's details were silently lost. Declare it here.
+                    const submissionsRef = database.ref('submissions');
                     // First, try to use the Firebase key stored by index.html
                     const orderId = localStorage.getItem('systomicOrderId');
                     if (orderId) {
@@ -1780,6 +1784,15 @@
         }
 
     })(); // End IIFE
+
+        // Navigate back to the home page. Uses addEventListener rather than an
+        // inline onclick attribute so it keeps working when inline handlers are
+        // blocked by a Content-Security-Policy.
+        document.querySelectorAll('[data-href]').forEach(function(el) {
+            el.addEventListener('click', function() {
+                window.location.href = el.dataset.href;
+            });
+        });
     </script>
 </body>
 </html>
