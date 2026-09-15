@@ -542,6 +542,19 @@
             height: 34px;
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .palette-swatch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .palette-swatch.copied {
+            outline: 2px solid #4ade80;
+            outline-offset: 2px;
         }
 
         /* Uploaded files gallery */
@@ -582,7 +595,8 @@
             flex-wrap: wrap;
         }
 
-        .media-btn {
+        .media-btn,
+        a.media-btn {
             background: rgba(102, 126, 234, 0.2);
             border: 1px solid rgba(102, 126, 234, 0.45);
             color: #ccd6f6;
@@ -594,9 +608,11 @@
             text-decoration: none;
             font-family: inherit;
             display: inline-block;
+            line-height: 1.2;
         }
 
-        .media-btn:hover {
+        .media-btn:hover,
+        a.media-btn:hover {
             background: rgba(102, 126, 234, 0.4);
         }
 
@@ -1328,8 +1344,8 @@ clientsList.innerHTML = submissions.map(submission => {
             var palette = toArray(order.brandPalette);
             var swatches = '';
             palette.forEach(function(color) {
-                swatches += '<div class="palette-swatch" style="background: ' + escapeHtml(color) +
-                            '" title="' + escapeHtml(color) + '"></div>';
+                swatches += '<button type="button" class="palette-swatch" data-copy-color="' + escapeHtml(color) +
+                            '" title="Click to copy ' + escapeHtml(color) + '" style="background: ' + escapeHtml(color) + '"></button>';
             });
 
             return '<div class="detail-section">' +
@@ -1721,6 +1737,20 @@ clientsList.innerHTML = submissions.map(submission => {
                 const statusMenu = e.target.closest('[data-status-menu]');
                 if (statusMenu) {
                     toggleStatusMenu(statusMenu.dataset.statusMenu, e);
+                    return;
+                }
+
+                // Copy a palette colour to the clipboard
+                const swatch = e.target.closest('[data-copy-color]');
+                if (swatch) {
+                    const color = swatch.dataset.copyColor;
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(color);
+                        }
+                    } catch (err) { /* clipboard unavailable - ignore */ }
+                    swatch.classList.add('copied');
+                    setTimeout(function() { swatch.classList.remove('copied'); }, 600);
                 }
             });
         })();
