@@ -1256,6 +1256,30 @@
             return Promise.race([allDone, timeout]);
         }
 
+        // ---- IndexedDB handoff: pass the client's chosen files to details.html
+        // instantly (local only, no network) so submit is never blocked by uploads.
+        function idbSaveAssets(key, files) {
+            return new Promise(function(resolve) {
+                try {
+                    if (!key || typeof indexedDB === 'undefined') { resolve(false); return; }
+                    const openReq = indexedDB.open('systomicAssets', 1);
+                    openReq.onupgradeneeded = function(e) {
+                        try { e.target.result.createObjectStore('assets'); } catch (err) {}
+                    };
+                    openReq.onerror = function() { resolve(false); };
+                    openReq.onsuccess = function(e) {
+                        const db = e.target.result;
+                        try {
+                            const tx = db.transaction('assets', 'readwrite');
+                            tx.objectStore('assets').put(files, key);
+                            tx.oncomplete = function() { resolve(true); };
+                            tx.onerror = function() { resolve(false); };
+                        } catch (err) { resolve(false); }
+                    };
+                } catch (err) { resolve(false); }
+            });
+        }
+
         function submitOrder() {
             // Guard against double submission: a click on the submit button fires
             // both the button's click listener AND the form's submit event, which
@@ -1350,68 +1374,55 @@
                 }
             };
 
-            setSubmitState(totalFiles > 0 ? 'Uploading files (0/' + totalFiles + ')...' : 'Submitting...');
+            setSubmitState('Submitting...');
 
-            // Upload the client's logo, photos and videos so our team can actually
-            // view and download them, then save everything to Firebase.
-            uploadAllAssets().then(function(assets) {
-                formData.logoUrl = assets.logo ? assets.logo.url : null;
-                formData.logoFileName = assets.logo ? assets.logo.name : (logoFile ? logoFile.name : null);
-                formData.logoFileType = assets.logo ? assets.logo.type : null;
-                formData.photoUrls = assets.photos;
-                formData.videoUrls = assets.videos;
-                formData.photosCount = assets.photos.length || uploadedPhotos.length;
-                formData.videosCount = assets.videos.length || uploadedVideos.length;
+            // Save the order to Firebase IMMEDIATELY - the client should never
+            // wait for file uploads. The chosen files are handed to details.html
+            // via IndexedDB (instant, local) and uploaded in the background there,
+            // while the client fills in the details form.
+            try {
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    const database = firebase.database();
+                    const submissionRef = database.ref('submissions').push();
+                    const submissionId = submissionRef.key;
 
-                const uploadedCount = (assets.logo ? 1 : 0) + assets.photos.length + assets.videos.length;
-                if (totalFiles > 0 && uploadedCount < totalFiles) {
-                    console.warn('Some assets could not be uploaded to Firebase Storage (' +
-                                 uploadedCount + '/' + totalFiles + '). The order was still submitted.');
-                }
-
-                // Re-save localStorage now that the asset URLs are included
-                try {
-                    localStorage.setItem('systomicOrder', JSON.stringify(formData));
-                } catch (err) {
-                    console.warn('LocalStorage not available');
-                }
-
-                setSubmitState('Submitting...');
-
-                // Save to Firebase Realtime Database
-                try {
-                    if (typeof firebase !== 'undefined' && firebase.database) {
-                        const database = firebase.database();
-                        const submissionRef = database.ref('submissions').push();
-                        submissionRef.set({
-                            id: submissionRef.key,
+                    // 1. Stash raw files locally so the next page can upload them
+                    idbSaveAssets(submissionId, {
+                        logo: logoFile || null,
+                        photos: uploadedPhotos.slice(),
+                        videos: uploadedVideos.slice()
+                    }).then(function(stashed) {
+                        if (!stashed) {
+                            console.warn('Could not stash files locally - background upload will be skipped for this order.');
+                        }
+                        // 2. Save the order itself right away
+                        return submissionRef.set({
+                            id: submissionId,
                             date: new Date().toISOString(),
                             status: 'New',
                             order: formData,
                             details: null,
                             url: formData.businessName ? 'https://' + formData.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.systomic.com' : ''
-                        }).then(function() {
-                            console.log('Order submission saved to Firebase');
-                            // Pass the Firebase key to details.html so it can update the same submission
-                            try { localStorage.setItem('systomicOrderId', submissionRef.key); } catch(e) {}
-                            setSubmitState('Redirecting...');
-                            window.location.href = 'details.html';
-                        }).catch(function(error) {
-                            console.error('Firebase save error:', error);
-                            alert('Warning: your order could not be synced to our team. Please contact support. (' + error.message + ')');
-                            window.location.href = 'details.html';
                         });
-                        return;
-                    }
-                } catch (err) {
-                    console.warn('Firebase not available:', err);
+                    }).then(function() {
+                        console.log('Order submission saved to Firebase');
+                        // Pass the Firebase key to details.html so it can update the same submission
+                        try { localStorage.setItem('systomicOrderId', submissionId); } catch(e) {}
+                        setSubmitState('Redirecting...');
+                        window.location.href = 'details.html';
+                    }).catch(function(error) {
+                        console.error('Firebase save error:', error);
+                        alert('Warning: your order could not be synced to our team. Please contact support. (' + error.message + ')');
+                        window.location.href = 'details.html';
+                    });
+                    return;
                 }
+            } catch (err) {
+                console.warn('Firebase not available:', err);
+            }
 
-                // Firebase unavailable - continue to the details page anyway
-                window.location.href = 'details.html';
-            });
-
-            return false; // Prevent form submission on all browsers
+            // Firebase unavailable - continue to the details page anyway
+            window.location.href = 'details.html';
         }
 
         // Remove error on input

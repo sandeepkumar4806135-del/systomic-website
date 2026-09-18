@@ -9,6 +9,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -1794,5 +1795,153 @@
             });
         });
     </script>
+
+    <script>
+        // ============================================================
+        // Background asset uploader: index.html hands the client's
+        // chosen logo/photos/videos over via IndexedDB (instant, no
+        // waiting). While the client fills this details form, we upload
+        // them to Firebase Storage and attach the URLs to the SAME
+        // submission, so the /admin dashboard can view & download them.
+        // ============================================================
+        (function() {
+            function idbGet(key) {
+                return new Promise(function(resolve) {
+                    try {
+                        if (typeof indexedDB === 'undefined') { resolve(null); return; }
+                        const openReq = indexedDB.open('systomicAssets', 1);
+                        openReq.onupgradeneeded = function(e) {
+                            try { e.target.result.createObjectStore('assets'); } catch (err) {}
+                        };
+                        openReq.onerror = function() { resolve(null); };
+                        openReq.onsuccess = function(e) {
+                            const db = e.target.result;
+                            try {
+                                const tx = db.transaction('assets', 'readonly');
+                                const getReq = tx.objectStore('assets').get(key);
+                                getReq.onsuccess = function() { resolve(getReq.result || null); };
+                                getReq.onerror = function() { resolve(null); };
+                            } catch (err) { resolve(null); }
+                        };
+                    } catch (err) { resolve(null); }
+                });
+            }
+
+            function idbDelete(key) {
+                try {
+                    const openReq = indexedDB.open('systomicAssets', 1);
+                    openReq.onsuccess = function(e) {
+                        try {
+                            const tx = e.target.result.transaction('assets', 'readwrite');
+                            tx.objectStore('assets').delete(key);
+                        } catch (err) {}
+                    };
+                } catch (err) {}
+            }
+
+            function fileToDataUrl(file) {
+                return new Promise(function(resolve) {
+                    try {
+                        const reader = new FileReader();
+                        reader.onload = function() { resolve(reader.result); };
+                        reader.onerror = function() { resolve(null); };
+                        reader.readAsDataURL(file);
+                    } catch (err) { resolve(null); }
+                });
+            }
+
+            function uploadToStorage(file, folder) {
+                return new Promise(function(resolve) {
+                    try {
+                        const path = 'client-assets/' + folder + '/' + Date.now() + '-' +
+                                     Math.random().toString(36).slice(2, 8) + '-' +
+                                     String(file.name || 'file').replace(/[^\w.\-]+/g, '_');
+                        const storageRef = firebase.storage().ref(path);
+                        const task = storageRef.put(file);
+                        task.on('state_changed', null, function() { resolve(null); }, function() {
+                            storageRef.getDownloadURL().then(function(url) {
+                                resolve({ name: file.name, url: url, size: file.size || 0, type: file.type || '' });
+                            }).catch(function() { resolve(null); });
+                        });
+                    } catch (err) { resolve(null); }
+                });
+            }
+
+
+            // Try Storage first; for images fall back to embedding as base64
+            // (works even when Firebase Storage is unavailable). Max ~1.5MB.
+            function uploadImage(file, folder) {
+                return uploadToStorage(file, folder).then(function(result) {
+                    if (result) return result;
+                    if ((file.size || 0) <= 1500000) {
+                        return fileToDataUrl(file).then(function(dataUrl) {
+                            return dataUrl ? { name: file.name, url: dataUrl, size: file.size || 0, type: file.type || '' } : null;
+                        });
+                    }
+                    return null;
+                });
+            }
+
+            function run() {
+                let orderId = null;
+                try { orderId = localStorage.getItem('systomicOrderId'); } catch (e) {}
+                if (!orderId) return;
+
+                idbGet(orderId).then(function(bundle) {
+                    if (!bundle) return;
+                    idbDelete(orderId); // take ownership so it never runs twice
+
+                    const jobs = [];
+                    const patch = {};
+                    let videosMissing = false;
+
+                    if (bundle.logo) {
+                        jobs.push(uploadImage(bundle.logo, 'logo').then(function(r) {
+                            if (r) { patch.logoUrl = r.url; patch.logoFileName = r.name; }
+                        }));
+                    }
+                    (bundle.photos || []).forEach(function(f) {
+                        jobs.push(uploadImage(f, 'photos').then(function(r) {
+                            if (r) {
+                                patch.photoUrls = patch.photoUrls || [];
+                                patch.photoUrls.push({ name: f.name, url: r.url, size: r.size, type: r.type });
+                            }
+                        }));
+                    });
+                    (bundle.videos || []).forEach(function(f) {
+                        jobs.push(uploadToStorage(f, 'videos').then(function(r) {
+                            if (r) {
+                                patch.videoUrls = patch.videoUrls || [];
+                                patch.videoUrls.push({ name: f.name, url: r.url, size: r.size, type: r.type });
+                            } else {
+                                videosMissing = true;
+                            }
+                        }));
+                    });
+
+                    Promise.all(jobs).then(function() {
+                        patch.assetsUploadedAt = new Date().toISOString();
+                        if (videosMissing) patch.videosMissing = true;
+                        try {
+                            if (typeof firebase !== 'undefined' && firebase.database) {
+                                firebase.database().ref('submissions/' + orderId).update(patch)
+                                    .then(function() { console.log('Background asset upload complete'); })
+                                    .catch(function(err) { console.warn('Asset update failed:', err); });
+                            }
+                        } catch (err) {
+                            console.warn('Asset update error:', err);
+                        }
+                    });
+                });
+            }
+
+            if (document.readyState === 'complete') {
+                setTimeout(run, 300);
+            } else {
+                window.addEventListener('load', function() { setTimeout(run, 300); });
+            }
+        })();
+    </script>
+
 </body>
 </html>

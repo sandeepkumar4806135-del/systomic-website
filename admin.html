@@ -1418,11 +1418,21 @@ clientsList.innerHTML = submissions.map(submission => {
 
             var missingNote = '';
             if (photos.length < claimedPhotos || videos.length < claimedVideos) {
+                var stillUploading = order.assetsUploadedAt === undefined &&
+                                     order.photosCount + order.videosCount > photos.length + videos.length;
                 missingNote = '<div class="asset-note">&#9888; The client selected ' + claimedPhotos +
                     ' photo(s) and ' + claimedVideos + ' video(s), but only ' + photos.length +
-                    ' photo(s) and ' + videos.length + ' video(s) are stored. Files from orders submitted before ' +
-                    'upload support was added cannot be recovered &mdash; ask the client to resend them.</div>';
+                    ' photo(s) and ' + videos.length + ' video(s) are stored. ' +
+                    (stillUploading
+                        ? 'Files may still be uploading in the background &mdash; refresh this page in a minute.'
+                        : 'Ask the client to resend the missing files.') + '</div>';
             }
+
+            var videosMissingNote = order.videosMissing
+                ? '<div class="asset-note">&#9888; One or more videos could not be uploaded automatically. ' +
+                  'Contact the client' + (order.whatsapp ? ' on WhatsApp (' + escapeHtml(order.whatsapp) + ')' : '') +
+                  ' to receive them.</div>'
+                : '';
 
             var emptyNote = '';
             if (!logoUrl && !photos.length && !videos.length && !claimedPhotos && !claimedVideos && !order.logoName) {
@@ -1447,7 +1457,7 @@ clientsList.innerHTML = submissions.map(submission => {
                     '</div>' +
                     (videos.length ? '<div class="media-grid">' + videoCards + '</div>' : '<div class="detail-value">No videos uploaded</div>') +
                 '</div>' +
-                missingNote + emptyNote +
+                missingNote + videosMissingNote + emptyNote +
             '</div>';
         }
 
