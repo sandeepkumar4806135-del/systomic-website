@@ -1416,16 +1416,28 @@ clientsList.innerHTML = submissions.map(submission => {
                 logoHtml = 'Not uploaded';
             }
 
+            // Only "the background upload run has not finished yet" may be
+            // described as still in progress. index.html stamps fresh orders with
+            // assetsPending: true when it hands the files to details.html, and
+            // details.html writes assetsUploadedAt the moment its upload run
+            // ends. An order with claims but no stash marker at all came from the
+            // older flow, so those files were never handed over, cannot be
+            // recovered from the order, and the admin must request them again.
             var missingNote = '';
             if (photos.length < claimedPhotos || videos.length < claimedVideos) {
-                var stillUploading = order.assetsUploadedAt === undefined &&
-                                     order.photosCount + order.videosCount > photos.length + videos.length;
+                var uploadRunFinished = order.assetsUploadedAt !== undefined;
+                var waitingOnBackgroundUpload = !uploadRunFinished && order.assetsPending === true;
+                var contactHint = order.whatsapp
+                    ? ' Ask the client to resend them on WhatsApp (' + escapeHtml(order.whatsapp) + ').'
+                    : ' Ask the client to resend the missing files.';
                 missingNote = '<div class="asset-note">&#9888; The client selected ' + claimedPhotos +
                     ' photo(s) and ' + claimedVideos + ' video(s), but only ' + photos.length +
                     ' photo(s) and ' + videos.length + ' video(s) are stored. ' +
-                    (stillUploading
-                        ? 'Files may still be uploading in the background &mdash; refresh this page in a minute.'
-                        : 'Ask the client to resend the missing files.') + '</div>';
+                    (waitingOnBackgroundUpload
+                        ? 'Uploads run in the background while the client fills in the details step &mdash; refresh this page in a minute.'
+                        : 'This order was submitted before automatic file uploads were switched on, so those files cannot be recovered from the order.' +
+                          contactHint) +
+                    '</div>';
             }
 
             var videosMissingNote = order.videosMissing

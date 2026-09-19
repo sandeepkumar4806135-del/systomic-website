@@ -1327,6 +1327,11 @@
             // Validation passed - lock the form so it can only be submitted once
             window.__systomicSubmitting = true;
 
+            // How many files the client attached. The order is saved with the
+            // counts - the actual bytes are stashed in IndexedDB and uploaded by
+            // details.html in the background.
+            const totalFiles = (logoFile ? 1 : 0) + uploadedPhotos.length + uploadedVideos.length;
+
             // Save form data to localStorage including business assets
             const formData = {
                 businessType: selectedBusiness,
@@ -1344,8 +1349,13 @@
                 brandTheme: selectedTheme,
                 brandPalette: selectedThemeColors,
                 logoName: logoFile ? logoFile.name : null,
+                logoFileName: logoFile ? logoFile.name : null,
                 photosCount: uploadedPhotos.length,
-                videosCount: uploadedVideos.length
+                videosCount: uploadedVideos.length,
+                // Marks an order whose files were handed to details.html for a
+                // background upload. /admin uses this to tell "upload still
+                // running" apart from "these files are gone for good".
+                assetsPending: totalFiles > 0
             };
 
             // Save to localStorage for page transition
@@ -1357,7 +1367,6 @@
 
             // Show loading indicator for mobile users
             const submitBtn = document.querySelector('#orderForm button[type="submit"]');
-            const totalFiles = (logoFile ? 1 : 0) + uploadedPhotos.length + uploadedVideos.length;
 
             function setSubmitState(text) {
                 if (submitBtn) {

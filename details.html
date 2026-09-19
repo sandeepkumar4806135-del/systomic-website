@@ -1800,9 +1800,11 @@
         // ============================================================
         // Background asset uploader: index.html hands the client's
         // chosen logo/photos/videos over via IndexedDB (instant, no
-        // waiting). While the client fills this details form, we upload
-        // them to Firebase Storage and attach the URLs to the SAME
-        // submission, so the /admin dashboard can view & download them.
+        // waiting). While the client fills in this details form, the
+        // images are compressed in the browser and attached as data URLs
+        // to the SAME submission, so the /admin dashboard can view &
+        // download them. Realtime Database is used rather than Firebase
+        // Storage because the deployed project is on the free Spark plan.
         // ============================================================
         (function() {
             function idbGet(key) {
@@ -1850,36 +1852,58 @@
                 });
             }
 
-            function uploadToStorage(file, folder) {
+            // Compress an image in the browser (max 1280px, JPEG ~72% quality).
+            // Returns a data URL small enough to embed in Realtime Database.
+            function compressImage(file) {
                 return new Promise(function(resolve) {
                     try {
-                        const path = 'client-assets/' + folder + '/' + Date.now() + '-' +
-                                     Math.random().toString(36).slice(2, 8) + '-' +
-                                     String(file.name || 'file').replace(/[^\w.\-]+/g, '_');
-                        const storageRef = firebase.storage().ref(path);
-                        const task = storageRef.put(file);
-                        task.on('state_changed', null, function() { resolve(null); }, function() {
-                            storageRef.getDownloadURL().then(function(url) {
-                                resolve({ name: file.name, url: url, size: file.size || 0, type: file.type || '' });
-                            }).catch(function() { resolve(null); });
-                        });
+                        var img = new Image();
+                        var objectUrl = URL.createObjectURL(file);
+                        img.onload = function() {
+                            try {
+                                var maxDim = 1280;
+                                var w = img.naturalWidth || img.width;
+                                var h = img.naturalHeight || img.height;
+                                var scale = Math.min(1, maxDim / Math.max(w, h));
+                                var cw = Math.max(1, Math.round(w * scale));
+                                var ch = Math.max(1, Math.round(h * scale));
+                                var canvas = document.createElement('canvas');
+                                canvas.width = cw;
+                                canvas.height = ch;
+                                var ctx = canvas.getContext('2d');
+                                ctx.fillStyle = '#ffffff';
+                                ctx.fillRect(0, 0, cw, ch);
+                                ctx.drawImage(img, 0, 0, cw, ch);
+                                URL.revokeObjectURL(objectUrl);
+                                var dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+                                if (dataUrl.length > 900000) {
+                                    dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                                }
+                                resolve(dataUrl);
+                            } catch (err) {
+                                URL.revokeObjectURL(objectUrl);
+                                resolve(null);
+                            }
+                        };
+                        img.onerror = function() { URL.revokeObjectURL(objectUrl); resolve(null); };
+                        img.src = objectUrl;
                     } catch (err) { resolve(null); }
                 });
             }
 
-
-            // Try Storage first; for images fall back to embedding as base64
-            // (works even when Firebase Storage is unavailable). Max ~1.5MB.
+            // Free-plan mode: NO Firebase Storage (it does not exist on the
+            // Spark plan and causes CORS errors). Photos are compressed in the
+            // browser and embedded as data URLs stored in Realtime Database.
             function uploadImage(file, folder) {
-                return uploadToStorage(file, folder).then(function(result) {
-                    if (result) return result;
-                    if ((file.size || 0) <= 1500000) {
-                        return fileToDataUrl(file).then(function(dataUrl) {
-                            return dataUrl ? { name: file.name, url: dataUrl, size: file.size || 0, type: file.type || '' } : null;
-                        });
-                    }
-                    return null;
+                return compressImage(file).then(function(dataUrl) {
+                    return dataUrl ? { name: file.name, url: dataUrl, size: Math.round(dataUrl.length * 0.75), type: 'image/jpeg' } : null;
                 });
+            }
+
+            // Videos are too large for the free Realtime Database, so they are
+            // flagged as missing (admin contacts the client via WhatsApp).
+            function uploadVideo(file) {
+                return Promise.resolve(null);
             }
 
             function run() {
@@ -1895,13 +1919,23 @@
                     const patch = {};
                     let videosMissing = false;
 
+                    // Every job is wrapped here so that ONE bad file can never
+                    // reject Promise.all and silently discard the files that DID
+                    // succeed. (This was the previous bug: the video job called an
+                    // undefined function, which threw and lost all the photos.)
+                    function addJob(job) {
+                        jobs.push(Promise.resolve(job).catch(function(err) {
+                            console.warn('Asset job failed:', err);
+                        }));
+                    }
+
                     if (bundle.logo) {
-                        jobs.push(uploadImage(bundle.logo, 'logo').then(function(r) {
+                        addJob(uploadImage(bundle.logo, 'logo').then(function(r) {
                             if (r) { patch.logoUrl = r.url; patch.logoFileName = r.name; }
                         }));
                     }
                     (bundle.photos || []).forEach(function(f) {
-                        jobs.push(uploadImage(f, 'photos').then(function(r) {
+                        addJob(uploadImage(f, 'photos').then(function(r) {
                             if (r) {
                                 patch.photoUrls = patch.photoUrls || [];
                                 patch.photoUrls.push({ name: f.name, url: r.url, size: r.size, type: r.type });
@@ -1909,29 +1943,49 @@
                         }));
                     });
                     (bundle.videos || []).forEach(function(f) {
-                        jobs.push(uploadToStorage(f, 'videos').then(function(r) {
-                            if (r) {
-                                patch.videoUrls = patch.videoUrls || [];
-                                patch.videoUrls.push({ name: f.name, url: r.url, size: r.size, type: r.type });
-                            } else {
-                                videosMissing = true;
-                            }
-                        }));
+                        // uploadVideo() has no Firebase Storage dependency (Storage
+                        // does not exist on the free Spark plan), so it always
+                        // resolves null and the video is flagged as missing.
+                        try {
+                            addJob(Promise.resolve(uploadVideo(f)).then(function(r) {
+                                if (r) {
+                                    patch.videoUrls = patch.videoUrls || [];
+                                    patch.videoUrls.push({ name: f.name, url: r.url, size: r.size, type: r.type });
+                                } else {
+                                    videosMissing = true;
+                                }
+                            }));
+                        } catch (err) {
+                            videosMissing = true;
+                        }
                     });
 
                     Promise.all(jobs).then(function() {
+                        // Always stamp the patch - even with zero files - so /admin
+                        // knows the upload run finished and stops saying "may still
+                        // be uploading in the background".
                         patch.assetsUploadedAt = new Date().toISOString();
+                        patch.photosStored = (patch.photoUrls || []).length;
+                        patch.videosStored = (patch.videoUrls || []).length;
                         if (videosMissing) patch.videosMissing = true;
                         try {
                             if (typeof firebase !== 'undefined' && firebase.database) {
                                 firebase.database().ref('submissions/' + orderId).update(patch)
-                                    .then(function() { console.log('Background asset upload complete'); })
+                                    .then(function() {
+                                        console.log('Asset upload complete: ' +
+                                            (patch.photoUrls || []).length + ' photo(s), ' +
+                                            (patch.videoUrls || []).length + ' video(s) stored');
+                                    })
                                     .catch(function(err) { console.warn('Asset update failed:', err); });
                             }
                         } catch (err) {
                             console.warn('Asset update error:', err);
                         }
+                    }).catch(function(err) {
+                        console.warn('Asset run failed:', err);
                     });
+                }).catch(function(err) {
+                    console.warn('Asset lookup failed:', err);
                 });
             }
 
